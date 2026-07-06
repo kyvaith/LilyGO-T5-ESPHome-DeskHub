@@ -64,7 +64,7 @@ font:
       family: Inter
       weight: bold
     id: font_time
-    size: 40
+    size: 36
     glyphs: *ui_glyphs
 
   - file: "fonts/materialdesignicons-webfont.ttf"
@@ -128,6 +128,10 @@ display:
     id: epaper_display
     greyscale: true
     fast_refresh: true
+    fast_mono: true
+    fast_mono_passes: 4
+    fast_mono_threshold: 14
+    fast_mono_time: 300
     full_update_every: 0
     partial_threshold_percent: 100
     partial_clear_cycles: 0
@@ -173,9 +177,9 @@ lvgl:
 
         - label:
             id: header_date
-            x: 704
-            y: 15
-            width: 92
+            x: 700
+            y: 18
+            width: 110
             height: 24
             text: "Pn, 6 lip"
             text_font: font_small
@@ -183,8 +187,8 @@ lvgl:
 
         - obj:
             id: header_time_divider
-            x: 812
-            y: 10
+            x: 824
+            y: 9
             width: 2
             height: 34
             bg_color: 0x000000
@@ -194,10 +198,10 @@ lvgl:
 
         - label:
             id: header_time
-            x: 828
-            y: 0
-            width: 108
-            height: 46
+            x: 838
+            y: 2
+            width: 98
+            height: 42
             text: "--:--"
             text_font: font_time
             text_align: right
@@ -226,9 +230,21 @@ lvgl:
             scrollable: false
             scrollbar_mode: "off"
             widgets:
+              - obj:
+                  x: 14
+                  y: 14
+                  width: 40
+                  height: 40
+                  bg_opa: transp
+                  border_color: 0x000000
+                  border_width: 1
+                  radius: 20
+                  pad_all: 0
+                  scrollable: false
+
               - label:
                   x: 18
-                  y: 18
+                  y: 19
                   width: 32
                   height: 32
                   text: "\U000F0595"
@@ -450,9 +466,21 @@ lvgl:
             scrollable: false
             scrollbar_mode: "off"
             widgets:
+              - obj:
+                  x: 14
+                  y: 14
+                  width: 40
+                  height: 40
+                  bg_opa: transp
+                  border_color: 0x000000
+                  border_width: 1
+                  radius: 20
+                  pad_all: 0
+                  scrollable: false
+
               - label:
                   x: 18
-                  y: 18
+                  y: 19
                   width: 32
                   height: 32
                   text: "\U000F06A1"
@@ -555,64 +583,68 @@ lvgl:
                   text_font: font_body_bold
 
               - button:
-                  id: fan_on_btn
-                  x: 226
+                  id: fan_switch_btn
+                  x: 232
                   y: 169
-                  width: 64
-                  height: 36
-                  radius: 18
+                  width: 126
+                  height: 38
                   bg_color: 0xFFFFFF
                   border_color: 0x000000
-                  border_width: 1
+                  border_width: 2
+                  radius: 19
                   shadow_width: 0
+                  pad_all: 0
                   on_click:
-                    - logger.log:
-                        level: INFO
-                        format: "Fan ON clicked"
-                    - homeassistant.service:
-                        service: fan.turn_on
-                        data:
-                          entity_id: ${entity_fan}
+                    - if:
+                        condition:
+                          lambda: return id(fan_state).state != "on";
+                        then:
+                          - logger.log:
+                              level: INFO
+                              format: "Fan toggle ON"
+                          - homeassistant.service:
+                              service: fan.turn_on
+                              data:
+                                entity_id: ${entity_fan}
+                        else:
+                          - logger.log:
+                              level: INFO
+                              format: "Fan toggle OFF"
+                          - homeassistant.service:
+                              service: fan.turn_off
+                              data:
+                                entity_id: ${entity_fan}
                     - delay: 800ms
                     - script.execute: refresh_dashboard
                   widgets:
+                    - obj:
+                        id: fan_switch_fill
+                        x: 63
+                        y: 0
+                        width: 63
+                        height: 38
+                        bg_color: 0x000000
+                        bg_opa: cover
+                        border_width: 0
+                        radius: 19
+                        pad_all: 0
+                        scrollable: false
+
                     - label:
                         id: fan_on_label
-                        x: 0
-                        y: 7
-                        width: 64
+                        x: 14
+                        y: 8
+                        width: 38
                         height: 22
                         text: "ON"
                         text_font: font_body_bold
                         text_align: center
 
-              - button:
-                  id: fan_off_btn
-                  x: 294
-                  y: 169
-                  width: 64
-                  height: 36
-                  radius: 18
-                  bg_color: 0x000000
-                  border_color: 0x000000
-                  border_width: 1
-                  shadow_width: 0
-                  on_click:
-                    - logger.log:
-                        level: INFO
-                        format: "Fan OFF clicked"
-                    - homeassistant.service:
-                        service: fan.turn_off
-                        data:
-                          entity_id: ${entity_fan}
-                    - delay: 800ms
-                    - script.execute: refresh_dashboard
-                  widgets:
                     - label:
                         id: fan_off_label
-                        x: 0
-                        y: 7
-                        width: 64
+                        x: 74
+                        y: 8
+                        width: 42
                         height: 22
                         text: "OFF"
                         text_font: font_body_bold
@@ -634,16 +666,28 @@ lvgl:
             scrollable: false
             scrollbar_mode: "off"
             widgets:
+              - obj:
+                  x: 14
+                  y: 14
+                  width: 40
+                  height: 40
+                  bg_opa: transp
+                  border_color: 0x000000
+                  border_width: 1
+                  radius: 20
+                  pad_all: 0
+                  scrollable: false
+
               - label:
                   x: 18
-                  y: 18
+                  y: 19
                   width: 32
                   height: 32
                   text: "\U000F081F"
                   text_font: font_mdi_26
 
               - label:
-                  x: 58
+                  x: 60
                   y: 20
                   width: 170
                   height: 24
@@ -732,7 +776,7 @@ lvgl:
 
               - obj:
                   x: 12
-                  y: 138
+                  y: 130
                   width: 490
                   height: 2
                   bg_color: 0x000000
@@ -742,7 +786,47 @@ lvgl:
 
               - label:
                   x: 14
-                  y: 150
+                  y: 140
+                  width: 190
+                  height: 22
+                  text: "ZYSK W CZASIE"
+                  text_font: font_small_bold
+
+              - chart:
+                  id: xtb_profit_chart
+                  x: 14
+                  y: 166
+                  width: 486
+                  height: 104
+                  bg_opa: transp
+                  border_width: 0
+                  pad_all: 0
+                  type: LINE
+                  point_count: 24
+                  update_mode: SHIFT
+                  div_line_count_hor: 3
+                  div_line_count_ver: 5
+                  axis_primary_y:
+                    min_value: 0
+                    max_value: 100
+                  series:
+                    - id: xtb_profit_series
+                      color: 0x000000
+                      points: [50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50]
+
+              - obj:
+                  x: 12
+                  y: 282
+                  width: 490
+                  height: 1
+                  bg_color: 0x000000
+                  bg_opa: cover
+                  border_width: 0
+                  pad_all: 0
+
+              - label:
+                  x: 14
+                  y: 292
                   width: 190
                   height: 22
                   text: "INSTRUMENT"
@@ -750,7 +834,7 @@ lvgl:
 
               - label:
                   x: 286
-                  y: 150
+                  y: 292
                   width: 86
                   height: 22
                   text: "DZIENNA %"
@@ -759,7 +843,7 @@ lvgl:
 
               - label:
                   x: 388
-                  y: 150
+                  y: 292
                   width: 104
                   height: 22
                   text: "ZYSK"
@@ -769,15 +853,15 @@ lvgl:
               - obj:
                   id: positions_list
                   x: 12
-                  y: 178
+                  y: 318
                   width: 490
-                  height: 260
+                  height: 120
                   bg_opa: transp
                   border_width: 0
                   pad_all: 0
                   scrollable: true
                   scroll_dir: ver
-                  scrollbar_mode: active
+                  scrollbar_mode: "on"
                   widgets:
                     - obj:
                         id: position_row_0
@@ -1455,12 +1539,30 @@ script:
           set_label(id(xtb_profit_value), money(profit, currency));
           set_label(id(xtb_profit_percent_value), percent(profit_percent));
 
+          static bool chart_seeded = false;
+          static int last_chart_minute = -1;
+          const int minute_key = now.is_valid() ? (now.hour * 60 + now.minute) : -2;
+          const float chart_percent = isnan(profit_percent) ? 0.0f : profit_percent;
+          int chart_point = (int) roundf((chart_percent + 10.0f) * 100.0f / 30.0f);
+          chart_point = std::max(0, std::min(100, chart_point));
+          if (!chart_seeded) {
+            for (int i = 0; i < 24; i++) {
+              lv_chart_set_value_by_id(id(xtb_profit_chart), id(xtb_profit_series), i, chart_point);
+            }
+            chart_seeded = true;
+            last_chart_minute = minute_key;
+            lv_chart_refresh(id(xtb_profit_chart));
+          } else if (minute_key != last_chart_minute) {
+            lv_chart_set_next_value(id(xtb_profit_chart), id(xtb_profit_series), chart_point);
+            last_chart_minute = minute_key;
+            lv_chart_refresh(id(xtb_profit_chart));
+          }
+
           static bool fan_initialized = false;
           static bool last_fan_on = false;
           bool fan_on = id(fan_state).state == "on";
           if (!fan_initialized || fan_on != last_fan_on) {
-            lv_obj_set_style_bg_color(id(fan_on_btn), lv_color_hex(fan_on ? 0x000000 : 0xFFFFFF), LV_PART_MAIN);
-            lv_obj_set_style_bg_color(id(fan_off_btn), lv_color_hex(fan_on ? 0xFFFFFF : 0x000000), LV_PART_MAIN);
+            lv_obj_set_x(id(fan_switch_fill), fan_on ? 0 : 63);
             lv_obj_set_style_text_color(id(fan_on_label), lv_color_hex(fan_on ? 0xFFFFFF : 0x000000), LV_PART_MAIN);
             lv_obj_set_style_text_color(id(fan_off_label), lv_color_hex(fan_on ? 0x000000 : 0xFFFFFF), LV_PART_MAIN);
             fan_initialized = true;
