@@ -1,0 +1,9 @@
+.esphome/
+.b/
+__pycache__/
+*.pyc
+*.bin
+*.elf
+*.map
+secrets.yaml
+wifi-secrets.yaml

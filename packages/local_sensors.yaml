@@ -1,0 +1,66 @@
+sensor:
+  - platform: wifi_signal
+    id: wifi_rssi
+    name: "${friendly_name} WiFi RSSI"
+    update_interval: 60s
+
+  - platform: uptime
+    id: device_uptime
+    name: "${friendly_name} Uptime"
+    update_interval: 60s
+
+  - platform: internal_temperature
+    id: esp32_temperature
+    name: "${friendly_name} ESP32 Temperature"
+    update_interval: 60s
+
+  - platform: adc
+    id: battery_voltage
+    name: "${friendly_name} Battery Voltage"
+    pin: GPIO14
+    attenuation: 12db
+    update_interval: 60s
+    unit_of_measurement: V
+    device_class: voltage
+    state_class: measurement
+    accuracy_decimals: 2
+    filters:
+      - multiply: 2.0
+      - median:
+          window_size: 7
+          send_every: 3
+          send_first_at: 1
+
+  - platform: template
+    id: battery_percent
+    name: "${friendly_name} Battery"
+    unit_of_measurement: "%"
+    device_class: battery
+    state_class: measurement
+    accuracy_decimals: 0
+    update_interval: 60s
+    lambda: |-
+      const float voltage = id(battery_voltage).state;
+      if (isnan(voltage)) {
+        return NAN;
+      }
+      const float pct = (voltage - 3.20f) * 100.0f / (4.20f - 3.20f);
+      return std::max(0.0f, std::min(100.0f, pct));
+
+binary_sensor:
+  - platform: status
+    name: "${friendly_name} Status"
+
+text_sensor:
+  - platform: wifi_info
+    ip_address:
+      id: wifi_ip
+      name: "${friendly_name} IP"
+    ssid:
+      id: wifi_ssid_text
+      name: "${friendly_name} WiFi SSID"
+
+  - platform: version
+    id: esphome_version_text
+    name: "${friendly_name} ESPHome Version"
+

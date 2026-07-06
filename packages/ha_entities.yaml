@@ -1,0 +1,47 @@
+sensor:
+  - platform: homeassistant
+    id: indoor_temperature
+    entity_id: ${entity_indoor_temperature}
+    internal: true
+
+  - platform: homeassistant
+    id: outdoor_temperature
+    entity_id: ${entity_outdoor_temperature}
+    internal: true
+
+  - platform: homeassistant
+    id: outdoor_humidity
+    entity_id: ${entity_outdoor_humidity}
+    internal: true
+
+  - platform: homeassistant
+    id: xtb_portfolio_value
+    entity_id: ${entity_xtb_portfolio_value}
+    internal: true
+
+  - platform: homeassistant
+    id: xtb_daily_change
+    entity_id: ${entity_xtb_daily_change}
+    internal: true
+
+  - platform: homeassistant
+    id: xtb_cash
+    entity_id: ${entity_xtb_cash}
+    internal: true
+
+text_sensor:
+  - platform: homeassistant
+    id: weather_condition
+    entity_id: ${entity_weather_condition}
+    internal: true
+
+  - platform: homeassistant
+    id: weather_summary
+    entity_id: ${entity_weather_summary}
+    internal: true
+
+  - platform: homeassistant
+    id: xtb_top_position
+    entity_id: ${entity_xtb_top_position}
+    internal: true
+

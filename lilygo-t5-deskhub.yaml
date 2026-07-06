@@ -1,0 +1,23 @@
+substitutions:
+  name: t5-desk
+  friendly_name: LilyGO T5 DeskHub
+
+  # Home Assistant entities used by the default pages.
+  # Replace these with your real entity IDs, or override them from ESPHome.
+  entity_indoor_temperature: sensor.living_room_temperature
+  entity_outdoor_temperature: sensor.outdoor_temperature
+  entity_outdoor_humidity: sensor.outdoor_humidity
+  entity_weather_condition: weather.home
+  entity_weather_summary: sensor.weather_summary
+  entity_xtb_portfolio_value: sensor.xtb_portfolio_value
+  entity_xtb_daily_change: sensor.xtb_daily_change_percent
+  entity_xtb_cash: sensor.xtb_cash
+  entity_xtb_top_position: sensor.xtb_top_position
+
+packages:
+  board: !include packages/board.yaml
+  local_sensors: !include packages/local_sensors.yaml
+  home_assistant_entities: !include packages/ha_entities.yaml
+  display_pages: !include packages/display_pages.yaml
+  controls: !include packages/controls.yaml
+  bluetooth_proxy: !include packages/bluetooth_proxy.yaml

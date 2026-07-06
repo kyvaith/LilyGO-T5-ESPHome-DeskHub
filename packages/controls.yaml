@@ -1,0 +1,37 @@
+touchscreen:
+  - platform: gt911
+    id: touch_panel
+    interrupt_pin: GPIO47
+
+binary_sensor:
+  - platform: gpio
+    id: physical_button
+    name: "${friendly_name} Button"
+    pin:
+      number: GPIO21
+      inverted: true
+      mode:
+        input: true
+        pullup: true
+    on_press:
+      - display.page.show_next: epaper_display
+      - component.update: epaper_display
+
+button:
+  - platform: template
+    name: "${friendly_name} Next Page"
+    on_press:
+      - display.page.show_next: epaper_display
+      - component.update: epaper_display
+
+  - platform: template
+    name: "${friendly_name} Refresh Display"
+    on_press:
+      - component.update: epaper_display
+
+  - platform: restart
+    name: "${friendly_name} Restart"
+
+  - platform: safe_mode
+    name: "${friendly_name} Safe Mode"
+

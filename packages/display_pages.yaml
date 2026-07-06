@@ -1,0 +1,152 @@
+font:
+  - file: "gfonts://Inter"
+    id: font_small
+    size: 18
+    glyphs: &default_glyphs " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[]_abcdefghijklmnopqrstuvwxyz{}|~"
+
+  - file: "gfonts://Inter"
+    id: font_body
+    size: 28
+    glyphs: *default_glyphs
+
+  - file: "gfonts://Inter"
+    id: font_title
+    size: 42
+    glyphs: *default_glyphs
+
+  - file: "gfonts://Inter"
+    id: font_huge
+    size: 72
+    glyphs: *default_glyphs
+
+color:
+  - id: ink
+    red: 0%
+    green: 0%
+    blue: 0%
+  - id: paper
+    red: 100%
+    green: 100%
+    blue: 100%
+  - id: gray_dark
+    red: 25%
+    green: 25%
+    blue: 25%
+  - id: gray_mid
+    red: 55%
+    green: 55%
+    blue: 55%
+  - id: gray_light
+    red: 82%
+    green: 82%
+    blue: 82%
+
+graph:
+  - id: temperature_graph
+    duration: 12h
+    width: 480
+    height: 150
+    x_grid: 3h
+    y_grid: 1.0
+    traces:
+      - sensor: indoor_temperature
+        name: Indoor
+        line_type: SOLID
+        line_thickness: 3
+        continuous: true
+        color: ink
+      - sensor: outdoor_temperature
+        name: Outdoor
+        line_type: DASHED
+        line_thickness: 2
+        continuous: true
+        color: gray_dark
+
+display:
+  - platform: t547
+    id: epaper_display
+    greyscale: true
+    rotation: 90
+    update_interval: 5min
+    pages:
+      - id: page_home
+        lambda: |-
+          auto black = id(ink);
+          auto white = id(paper);
+          auto muted = id(gray_mid);
+          it.fill(white);
+          it.printf(20, 18, id(font_title), black, TextAlign::TOP_LEFT, "DeskHub");
+          it.strftime(it.get_width() - 20, 24, id(font_body), black, TextAlign::TOP_RIGHT, "%H:%M", id(ha_time).now());
+          it.line(20, 78, it.get_width() - 20, 78, black);
+
+          float indoor = id(indoor_temperature).state;
+          float outdoor = id(outdoor_temperature).state;
+          it.print(28, 112, id(font_small), muted, "INDOOR");
+          if (isnan(indoor)) {
+            it.print(28, 140, id(font_huge), black, "--.- C");
+          } else {
+            it.printf(28, 140, id(font_huge), black, "%.1f C", indoor);
+          }
+
+          it.print(300, 112, id(font_small), muted, "OUTSIDE");
+          if (isnan(outdoor)) {
+            it.print(300, 140, id(font_huge), black, "--.- C");
+          } else {
+            it.printf(300, 140, id(font_huge), black, "%.1f C", outdoor);
+          }
+
+          it.rectangle(24, 260, it.get_width() - 48, 118, black);
+          it.printf(44, 282, id(font_body), black, "Weather: %s", id(weather_condition).state.c_str());
+          it.printf(44, 324, id(font_small), muted, "%s", id(weather_summary).state.c_str());
+
+          it.print(28, it.get_height() - 110, id(font_small), muted, "BAT");
+          it.printf(28, it.get_height() - 78, id(font_body), black, "%.2f V / %.0f%%", id(battery_voltage).state, id(battery_percent).state);
+          it.print(it.get_width() - 28, it.get_height() - 110, id(font_small), muted, "WIFI");
+          it.printf(it.get_width() - 28, it.get_height() - 78, id(font_body), black, TextAlign::TOP_RIGHT, "%.0f dBm", id(wifi_rssi).state);
+
+      - id: page_weather
+        lambda: |-
+          auto black = id(ink);
+          auto white = id(paper);
+          auto muted = id(gray_mid);
+          it.fill(white);
+          it.print(20, 18, id(font_title), black, "Weather");
+          it.line(20, 78, it.get_width() - 20, 78, black);
+          it.graph(28, 118, id(temperature_graph), id(gray_light));
+          it.print(28, 300, id(font_small), muted, "Temperature history");
+          it.printf(28, 350, id(font_body), black, "Humidity: %.0f%%", id(outdoor_humidity).state);
+          it.printf(28, 400, id(font_body), black, "Outdoor: %.1f C", id(outdoor_temperature).state);
+          it.printf(28, 450, id(font_body), black, "Indoor: %.1f C", id(indoor_temperature).state);
+          it.printf(28, 520, id(font_small), muted, "%s", id(weather_summary).state.c_str());
+
+      - id: page_markets
+        lambda: |-
+          auto black = id(ink);
+          auto white = id(paper);
+          auto muted = id(gray_mid);
+          it.fill(white);
+          it.print(20, 18, id(font_title), black, "Investments");
+          it.line(20, 78, it.get_width() - 20, 78, black);
+          it.print(28, 126, id(font_small), muted, "PORTFOLIO");
+          it.printf(28, 158, id(font_huge), black, "%.2f", id(xtb_portfolio_value).state);
+          it.print(28, 260, id(font_small), muted, "DAY CHANGE");
+          it.printf(28, 292, id(font_title), black, "%.2f%%", id(xtb_daily_change).state);
+          it.print(28, 378, id(font_small), muted, "CASH");
+          it.printf(28, 410, id(font_body), black, "%.2f", id(xtb_cash).state);
+          it.print(28, 500, id(font_small), muted, "TOP POSITION");
+          it.printf(28, 532, id(font_body), black, "%s", id(xtb_top_position).state.c_str());
+
+      - id: page_system
+        lambda: |-
+          auto black = id(ink);
+          auto white = id(paper);
+          auto muted = id(gray_mid);
+          it.fill(white);
+          it.print(20, 18, id(font_title), black, "System");
+          it.line(20, 78, it.get_width() - 20, 78, black);
+          it.printf(28, 124, id(font_body), black, "Battery: %.2f V / %.0f%%", id(battery_voltage).state, id(battery_percent).state);
+          it.printf(28, 174, id(font_body), black, "ESP32: %.1f C", id(esp32_temperature).state);
+          it.printf(28, 224, id(font_body), black, "WiFi: %.0f dBm", id(wifi_rssi).state);
+          it.printf(28, 274, id(font_body), black, "IP: %s", id(wifi_ip).state.c_str());
+          it.printf(28, 324, id(font_body), black, "SSID: %s", id(wifi_ssid_text).state.c_str());
+          it.printf(28, 400, id(font_small), muted, "ESPHome: %s", id(esphome_version_text).state.c_str());
