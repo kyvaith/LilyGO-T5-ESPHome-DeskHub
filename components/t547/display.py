@@ -13,6 +13,10 @@ from esphome.core import CORE
 DEPENDENCIES = ["esp32"]
 
 CONF_GREYSCALE = "greyscale"
+CONF_FAST_REFRESH = "fast_refresh"
+CONF_FULL_UPDATE_EVERY = "full_update_every"
+CONF_PARTIAL_CLEAR_CYCLES = "partial_clear_cycles"
+CONF_PARTIAL_THRESHOLD_PERCENT = "partial_threshold_percent"
 
 
 t547_ns = cg.esphome_ns.namespace("t547")
@@ -25,6 +29,10 @@ CONFIG_SCHEMA = cv.All(
         {
             cv.GenerateID(): cv.declare_id(T547),
             cv.Optional(CONF_GREYSCALE, default=False): cv.boolean,
+            cv.Optional(CONF_FAST_REFRESH, default=True): cv.boolean,
+            cv.Optional(CONF_FULL_UPDATE_EVERY, default=24): cv.int_range(min=1, max=250),
+            cv.Optional(CONF_PARTIAL_CLEAR_CYCLES, default=1): cv.int_range(min=0, max=8),
+            cv.Optional(CONF_PARTIAL_THRESHOLD_PERCENT, default=70): cv.int_range(min=1, max=100),
         }
     )
     .extend(cv.polling_component_schema("5s")),
@@ -47,6 +55,10 @@ async def to_code(config):
         cg.add(var.set_writer(lambda_))
 
     cg.add(var.set_greyscale(config[CONF_GREYSCALE]))
+    cg.add(var.set_fast_refresh(config[CONF_FAST_REFRESH]))
+    cg.add(var.set_full_update_every(config[CONF_FULL_UPDATE_EVERY]))
+    cg.add(var.set_partial_clear_cycles(config[CONF_PARTIAL_CLEAR_CYCLES]))
+    cg.add(var.set_partial_threshold_percent(config[CONF_PARTIAL_THRESHOLD_PERCENT]))
 
     if CORE.is_esp32:
         from esphome.components.esp32 import include_builtin_idf_component

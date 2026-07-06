@@ -5,43 +5,52 @@ sensor:
     internal: true
 
   - platform: homeassistant
-    id: outdoor_temperature
-    entity_id: ${entity_outdoor_temperature}
+    id: indoor_humidity
+    entity_id: ${entity_indoor_humidity}
     internal: true
 
   - platform: homeassistant
-    id: outdoor_humidity
-    entity_id: ${entity_outdoor_humidity}
+    id: weather_temperature
+    entity_id: ${entity_weather}
+    attribute: temperature
     internal: true
 
   - platform: homeassistant
-    id: xtb_portfolio_value
-    entity_id: ${entity_xtb_portfolio_value}
-    internal: true
-
-  - platform: homeassistant
-    id: xtb_daily_change
-    entity_id: ${entity_xtb_daily_change}
-    internal: true
-
-  - platform: homeassistant
-    id: xtb_cash
-    entity_id: ${entity_xtb_cash}
+    id: xtb_balance
+    entity_id: ${entity_xtb_balance}
     internal: true
 
 text_sensor:
   - platform: homeassistant
     id: weather_condition
-    entity_id: ${entity_weather_condition}
+    entity_id: ${entity_weather}
     internal: true
 
   - platform: homeassistant
-    id: weather_summary
-    entity_id: ${entity_weather_summary}
+    id: weather_forecast
+    entity_id: ${entity_weather}
+    attribute: forecast
     internal: true
 
   - platform: homeassistant
-    id: xtb_top_position
-    entity_id: ${entity_xtb_top_position}
+    id: fan_state
+    entity_id: ${entity_fan}
     internal: true
 
+  - platform: homeassistant
+    id: xtb_summary
+    entity_id: ${entity_xtb_balance}
+    attribute: summary
+    internal: true
+
+  - platform: homeassistant
+    id: xtb_positions
+    entity_id: ${entity_xtb_balance}
+    attribute: positions
+    internal: true
+
+  - platform: homeassistant
+    id: xtb_currency
+    entity_id: ${entity_xtb_balance}
+    attribute: unit_of_measurement
+    internal: true

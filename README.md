@@ -28,13 +28,15 @@ needs slower, deliberate refreshes rather than a continuously animated GUI.
 
 - 960x540 ED047TC1 e-paper display through the external `t547` ESPHome component.
 - Grayscale rendering enabled for weather, charts and dashboard typography.
-- ESPHome display pages for Home, Weather, Investments and System status.
-- Home Assistant imported sensors/text sensors for weather and XTB data.
-- Graph component for local temperature history.
+- Single landscape dashboard matching the desk-panel mockup: weather, home
+  climate, fan control, and investments.
+- Home Assistant imported sensors/text sensors for Tomorrow.io weather, local
+  room conditions, fan state, and XTB balance attributes.
+- Touch control for the Home Assistant fan entity.
 - Battery voltage and percentage from the board ADC on GPIO14.
 - ESP32 internal temperature, WiFi RSSI, uptime and network details.
 - GT911 touchscreen bus configured on GPIO18/GPIO17 with interrupt on GPIO47.
-- Physical button on GPIO21 to cycle pages.
+- Physical button on GPIO21 for manual display refresh.
 - Home Assistant buttons for next page, refresh, restart and safe mode.
 - Bluetooth proxy package enabled by the default `lilygo-t5-deskhub.yaml`.
 - `lilygo-t5-deskhub-lite.yaml` without Bluetooth for Windows builds and first bring-up.
@@ -45,7 +47,11 @@ needs slower, deliberate refreshes rather than a continuously animated GUI.
 1. Copy `secrets.yaml.example` to `secrets.yaml`.
 2. Fill WiFi, OTA and API values.
 3. Edit substitutions in `lilygo-t5-deskhub.yaml` to match your Home Assistant
-   entity IDs.
+   entity IDs. The default file is already wired for:
+   `weather.tomorrow_io_karczewizna_hourly`,
+   `sensor.biuro_2_warunki_temperature`,
+   `sensor.biuro_2_warunki_humidity`, `fan.wentylator_2`, and
+   `sensor.xtb_53578037_saldo`.
 4. Build and flash the full Bluetooth-proxy variant:
 
 ```powershell
@@ -91,13 +97,14 @@ Validated locally with ESPHome `2026.6.0-dev` from `kyvaith/esphome`.
 - `python -m esphome config lilygo-t5-deskhub.yaml` passes.
 - `python -m esphome config lilygo-t5-deskhub-lite.yaml` passes.
 - `python -m esphome compile lilygo-t5-deskhub-lite.yaml` passes on Windows.
-- The full Bluetooth variant can hit the Windows command-line length limit
-  during linking. Build it from the Home Assistant ESPHome add-on, Docker, WSL,
-  or Linux if local Windows compilation fails.
+- The full Bluetooth variant still hits the Windows command-line length limit
+  while generating `sections.ld`, even with `ESPHOME_BUILD_PATH=C:/b` and a
+  mapped `X:\` source path. Build that variant from the Home Assistant ESPHome
+  add-on, Docker, WSL, or Linux.
 
 ## Pages And Entities
 
-Pages are defined in `packages/display_pages.yaml`.
+The dashboard page is defined in `packages/display_pages.yaml`.
 
 Home Assistant entities are defined in `packages/ha_entities.yaml`. The top-level
 `lilygo-t5-deskhub.yaml` file provides substitutions for the default entity IDs,
@@ -106,32 +113,30 @@ so the normal edit path is:
 ```yaml
 substitutions:
   entity_indoor_temperature: sensor.office_temperature
-  entity_xtb_portfolio_value: sensor.xtb_portfolio_value
+  entity_indoor_humidity: sensor.office_humidity
+  entity_fan: fan.office_fan
+  entity_xtb_balance: sensor.xtb_53578037_saldo
 ```
 
 More examples are in [docs/ADDING_PAGES.md](docs/ADDING_PAGES.md).
 
 ## Refresh Strategy
 
-The current build uses the `t547` component, which performs full grayscale
-refreshes. That is a good baseline for a desk dashboard and supports the panel
-grayscale path cleanly.
+The local `t547` component keeps a previous grayscale framebuffer in PSRAM,
+detects the dirty rectangle, and updates only that area when possible. A full
+grayscale refresh is still forced periodically with `full_update_every` to fight
+ghosting.
 
-The fast "magic refresh" used in the Paperboy emulator is a separate binary
-drive path. It is useful for animation, but not yet exposed as a reusable
-ESPHome component. If we want that in ESPHome later, the likely next step is a
-custom component in `kyvaith/esphome` with:
-
-- binary fast-refresh mode for selected widgets,
-- full grayscale refresh for static pages,
-- a configurable full-refresh cadence to fight ghosting.
+This is inspired by the Paperboy fast-refresh idea, but kept in ESPHome's
+normal display pipeline so the dashboard can preserve 16-level grayscale
+instead of switching the whole panel to a 1-bit animation path.
 
 ## Notes
 
 - Bluetooth proxy is enabled, but ESPHome warns that memory can become tight on
   some boards. Use `lilygo-t5-deskhub-lite.yaml` for first bring-up or Windows
   builds that hit the command-line limit.
-- The display is set to `rotation: 90` for a portrait desk orientation. Change
+- The display is set to `rotation: 0` for the landscape mockup orientation. Change
   it to `0`, `180`, or `270` if your case/stand is different.
-- The default XTB entity names are placeholders until the XTB Home Assistant
-  add-on publishes its final sensors.
+- The XTB card model is read from the balance entity attributes: `summary`,
+  `positions`, and `unit_of_measurement`.

@@ -2,15 +2,11 @@ substitutions:
   name: t5-desk-lite
   friendly_name: LilyGO T5 DeskHub Lite
 
-  entity_indoor_temperature: sensor.living_room_temperature
-  entity_outdoor_temperature: sensor.outdoor_temperature
-  entity_outdoor_humidity: sensor.outdoor_humidity
-  entity_weather_condition: weather.home
-  entity_weather_summary: sensor.weather_summary
-  entity_xtb_portfolio_value: sensor.xtb_portfolio_value
-  entity_xtb_daily_change: sensor.xtb_daily_change_percent
-  entity_xtb_cash: sensor.xtb_cash
-  entity_xtb_top_position: sensor.xtb_top_position
+  entity_weather: weather.tomorrow_io_karczewizna_hourly
+  entity_indoor_temperature: sensor.biuro_2_warunki_temperature
+  entity_indoor_humidity: sensor.biuro_2_warunki_humidity
+  entity_fan: fan.wentylator_2
+  entity_xtb_balance: sensor.xtb_53578037_saldo
 
 packages:
   board: !include packages/board.yaml

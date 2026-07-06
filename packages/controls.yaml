@@ -2,6 +2,30 @@ touchscreen:
   - platform: gt911
     id: touch_panel
     interrupt_pin: GPIO47
+    display: epaper_display
+    on_touch:
+      - if:
+          condition:
+            lambda: |-
+              return touch.x >= 216 && touch.x <= 292 && touch.y >= 424 && touch.y <= 466;
+          then:
+            - homeassistant.service:
+                service: fan.turn_on
+                data:
+                  entity_id: ${entity_fan}
+            - delay: 500ms
+            - component.update: epaper_display
+      - if:
+          condition:
+            lambda: |-
+              return touch.x > 292 && touch.x <= 360 && touch.y >= 424 && touch.y <= 466;
+          then:
+            - homeassistant.service:
+                service: fan.turn_off
+                data:
+                  entity_id: ${entity_fan}
+            - delay: 500ms
+            - component.update: epaper_display
 
 binary_sensor:
   - platform: gpio
@@ -34,4 +58,3 @@ button:
 
   - platform: safe_mode
     name: "${friendly_name} Safe Mode"
-
