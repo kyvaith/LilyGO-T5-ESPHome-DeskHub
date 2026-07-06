@@ -66,7 +66,7 @@ display:
   - platform: t547
     id: epaper_display
     greyscale: true
-    rotation: 90
+    rotation: 180
     update_interval: 5min
     pages:
       - id: page_home

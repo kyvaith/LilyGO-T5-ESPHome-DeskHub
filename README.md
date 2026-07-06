@@ -54,6 +54,10 @@ python -m esphome run lilygo-t5-deskhub.yaml
 
 Use USB for the first flash. OTA should work after the device joins WiFi.
 
+The native ESPHome API is intentionally left unencrypted by default for easier
+first pairing in Home Assistant. Add an `api.encryption.key` later if you want
+to lock it down.
+
 On Windows, the ESP32-S3 Arduino 3 build can exceed the command-line length
 limit when Bluetooth support is enabled. The configuration reads
 `ESPHOME_BUILD_PATH`, so use a short path when compiling or flashing:
