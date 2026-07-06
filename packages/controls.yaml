@@ -4,28 +4,8 @@ touchscreen:
     interrupt_pin: GPIO47
     display: epaper_display
     on_touch:
-      - if:
-          condition:
-            lambda: |-
-              return touch.x >= 216 && touch.x <= 292 && touch.y >= 424 && touch.y <= 466;
-          then:
-            - homeassistant.service:
-                service: fan.turn_on
-                data:
-                  entity_id: ${entity_fan}
-            - delay: 500ms
-            - component.update: epaper_display
-      - if:
-          condition:
-            lambda: |-
-              return touch.x > 292 && touch.x <= 360 && touch.y >= 424 && touch.y <= 466;
-          then:
-            - homeassistant.service:
-                service: fan.turn_off
-                data:
-                  entity_id: ${entity_fan}
-            - delay: 500ms
-            - component.update: epaper_display
+      - lambda: |-
+          ESP_LOGI("touch", "Touch x=%d y=%d", touch.x, touch.y);
 
 binary_sensor:
   - platform: gpio
@@ -38,20 +18,18 @@ binary_sensor:
         input: true
         pullup: true
     on_press:
-      - display.page.show_next: epaper_display
-      - component.update: epaper_display
+      - script.execute: refresh_dashboard
 
 button:
   - platform: template
-    name: "${friendly_name} Next Page"
+    name: "${friendly_name} Refresh Dashboard"
     on_press:
-      - display.page.show_next: epaper_display
-      - component.update: epaper_display
+      - script.execute: refresh_dashboard
 
   - platform: template
     name: "${friendly_name} Refresh Display"
     on_press:
-      - component.update: epaper_display
+      - script.execute: refresh_dashboard
 
   - platform: restart
     name: "${friendly_name} Restart"

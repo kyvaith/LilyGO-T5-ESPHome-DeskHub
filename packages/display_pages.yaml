@@ -48,7 +48,7 @@ font:
       family: Inter
       weight: bold
     id: font_value
-    size: 34
+    size: 26
     glyphs: *ui_glyphs
 
   - file:
@@ -56,7 +56,7 @@ font:
       family: Inter
       weight: bold
     id: font_temp
-    size: 56
+    size: 50
     glyphs: *ui_glyphs
 
   - file:
@@ -67,6 +67,44 @@ font:
     size: 34
     glyphs: *ui_glyphs
 
+  - file: "fonts/materialdesignicons-webfont.ttf"
+    id: font_mdi_18
+    size: 18
+    glyphs: &mdi_glyphs
+      - "\U000F00ED" # calendar
+      - "\U000F012A" # chart-line
+      - "\U000F0210" # fan
+      - "\U000F0425" # power
+      - "\U000F050F" # thermometer
+      - "\U000F058E" # water-percent
+      - "\U000F0590" # cloudy
+      - "\U000F0595" # partly-cloudy
+      - "\U000F0597" # rainy
+      - "\U000F0599" # sunny
+      - "\U000F06A1" # home-outline
+      - "\U000F0741" # gesture-tap
+      - "\U000F081F" # finance
+
+  - file: "fonts/materialdesignicons-webfont.ttf"
+    id: font_mdi_26
+    size: 26
+    glyphs: *mdi_glyphs
+
+  - file: "fonts/materialdesignicons-webfont.ttf"
+    id: font_mdi_42
+    size: 42
+    glyphs: *mdi_glyphs
+
+  - file: "fonts/materialdesignicons-webfont.ttf"
+    id: font_mdi_64
+    size: 64
+    glyphs: *mdi_glyphs
+
+image:
+  - file: "assets/lvgl-unused.png"
+    id: lvgl_unused_image
+    type: BINARY
+
 color:
   - id: ink
     red: 0%
@@ -76,462 +114,1416 @@ color:
     red: 100%
     green: 100%
     blue: 100%
-  - id: gray_75
-    red: 75%
-    green: 75%
-    blue: 75%
-  - id: gray_58
-    red: 58%
-    green: 58%
-    blue: 58%
-  - id: gray_38
-    red: 38%
-    green: 38%
-    blue: 38%
+  - id: line_gray
+    red: 72%
+    green: 72%
+    blue: 72%
+  - id: soft_gray
+    red: 93%
+    green: 93%
+    blue: 93%
 
 display:
   - platform: t547
     id: epaper_display
     greyscale: true
     fast_refresh: true
-    full_update_every: 24
-    partial_clear_cycles: 1
+    full_update_every: 18
     partial_threshold_percent: 72
-    rotation: 0
-    update_interval: 60s
-    pages:
-      - id: page_dashboard
-        lambda: |-
-          auto black = id(ink);
-          auto white = id(paper);
-          auto gray = id(gray_58);
-          auto line_gray = id(gray_75);
-          it.fill(white);
+    partial_clear_cycles: 2
+    update_interval: never
+    auto_clear_enabled: false
 
-          auto line_t = [&](int x1, int y1, int x2, int y2, Color color, int t = 1) {
-            for (int i = 0; i < t; i++) {
-              it.line(x1, y1 + i, x2, y2 + i, color);
+lvgl:
+  id: desk_lvgl
+  displays:
+    - epaper_display
+  touchscreens:
+    - touchscreen_id: touch_panel
+  buffer_size: 25%
+  draw_rounding: 16
+  update_interval: 1s
+  update_when_display_idle: false
+  log_level: WARN
+  byte_order: little_endian
+  default_font: font_body
+  bg_color: 0xFFFFFF
+  text_color: 0x000000
+  on_draw_end:
+    - logger.log:
+        level: INFO
+        format: "LVGL draw ended; updating e-paper"
+    - component.update: epaper_display
+  pages:
+    - id: dashboard_page
+      bg_color: 0xFFFFFF
+      scrollable: false
+      scrollbar_mode: "off"
+      widgets:
+        - obj:
+            id: header_rule
+            x: 24
+            y: 46
+            width: 712
+            height: 1
+            bg_color: 0x000000
+            bg_opa: cover
+            border_width: 0
+            pad_all: 0
+
+        - label:
+            id: header_date
+            x: 742
+            y: 24
+            width: 78
+            height: 20
+            text: "Pn, 6 lip"
+            text_font: font_small
+            text_align: right
+
+        - obj:
+            id: header_time_divider
+            x: 832
+            y: 17
+            width: 1
+            height: 31
+            bg_color: 0x000000
+            bg_opa: cover
+            border_width: 0
+            pad_all: 0
+
+        - label:
+            id: header_time
+            x: 848
+            y: 8
+            width: 86
+            height: 40
+            text: "--:--"
+            text_font: font_time
+            text_align: right
+
+        - image:
+            id: lvgl_image_enabler
+            x: -4
+            y: -4
+            width: 1
+            height: 1
+            hidden: true
+            src: lvgl_unused_image
+
+        - obj:
+            id: weather_card
+            x: 24
+            y: 56
+            width: 365
+            height: 200
+            bg_color: 0xFFFFFF
+            bg_opa: cover
+            border_color: 0x000000
+            border_width: 1
+            radius: 6
+            pad_all: 0
+            scrollable: false
+            scrollbar_mode: "off"
+            widgets:
+              - label:
+                  x: 18
+                  y: 18
+                  width: 26
+                  height: 26
+                  text: "\U000F0595"
+                  text_font: font_mdi_26
+
+              - label:
+                  x: 54
+                  y: 19
+                  width: 135
+                  height: 22
+                  text: "POGODA"
+                  text_font: font_section
+
+              - label:
+                  id: weather_main_icon
+                  x: 42
+                  y: 53
+                  width: 78
+                  height: 74
+                  text: "\U000F0595"
+                  text_font: font_mdi_64
+
+              - label:
+                  id: weather_temp_value
+                  x: 160
+                  y: 48
+                  width: 180
+                  height: 58
+                  text: "--°C"
+                  text_font: font_temp
+                  long_mode: CLIP
+
+              - label:
+                  id: weather_condition_value
+                  x: 164
+                  y: 111
+                  width: 165
+                  height: 40
+                  text: "Brak danych"
+                  text_font: font_body
+                  long_mode: DOT
+
+              - obj:
+                  x: 18
+                  y: 142
+                  width: 329
+                  height: 1
+                  bg_color: 0x000000
+                  bg_opa: cover
+                  border_width: 0
+                  pad_all: 0
+
+              - label:
+                  id: forecast_day_0
+                  x: 20
+                  y: 149
+                  width: 77
+                  height: 16
+                  text: "Dziś"
+                  text_font: font_tiny
+                  text_align: center
+
+              - label:
+                  id: forecast_icon_0
+                  x: 43
+                  y: 164
+                  width: 30
+                  height: 27
+                  text: "\U000F0590"
+                  text_font: font_mdi_26
+                  text_align: center
+
+              - label:
+                  id: forecast_temp_0
+                  x: 15
+                  y: 184
+                  width: 87
+                  height: 14
+                  text: "--°C / --°C"
+                  text_font: font_micro
+                  text_align: center
+                  long_mode: CLIP
+
+              - obj:
+                  x: 104
+                  y: 151
+                  width: 1
+                  height: 40
+                  bg_color: 0xB8B8B8
+                  bg_opa: cover
+                  border_width: 0
+                  pad_all: 0
+
+              - label:
+                  id: forecast_day_1
+                  x: 108
+                  y: 149
+                  width: 77
+                  height: 16
+                  text: "Jutro"
+                  text_font: font_tiny
+                  text_align: center
+
+              - label:
+                  id: forecast_icon_1
+                  x: 131
+                  y: 164
+                  width: 30
+                  height: 27
+                  text: "\U000F0590"
+                  text_font: font_mdi_26
+                  text_align: center
+
+              - label:
+                  id: forecast_temp_1
+                  x: 103
+                  y: 184
+                  width: 87
+                  height: 14
+                  text: "--°C / --°C"
+                  text_font: font_micro
+                  text_align: center
+                  long_mode: CLIP
+
+              - obj:
+                  x: 192
+                  y: 151
+                  width: 1
+                  height: 40
+                  bg_color: 0xB8B8B8
+                  bg_opa: cover
+                  border_width: 0
+                  pad_all: 0
+
+              - label:
+                  id: forecast_day_2
+                  x: 196
+                  y: 149
+                  width: 77
+                  height: 16
+                  text: "Poj."
+                  text_font: font_tiny
+                  text_align: center
+
+              - label:
+                  id: forecast_icon_2
+                  x: 219
+                  y: 164
+                  width: 30
+                  height: 27
+                  text: "\U000F0590"
+                  text_font: font_mdi_26
+                  text_align: center
+
+              - label:
+                  id: forecast_temp_2
+                  x: 191
+                  y: 184
+                  width: 87
+                  height: 14
+                  text: "--°C / --°C"
+                  text_font: font_micro
+                  text_align: center
+                  long_mode: CLIP
+
+              - obj:
+                  x: 280
+                  y: 151
+                  width: 1
+                  height: 40
+                  bg_color: 0xB8B8B8
+                  bg_opa: cover
+                  border_width: 0
+                  pad_all: 0
+
+              - label:
+                  id: forecast_day_3
+                  x: 284
+                  y: 149
+                  width: 77
+                  height: 16
+                  text: "Późn."
+                  text_font: font_tiny
+                  text_align: center
+
+              - label:
+                  id: forecast_icon_3
+                  x: 307
+                  y: 164
+                  width: 30
+                  height: 27
+                  text: "\U000F0590"
+                  text_font: font_mdi_26
+                  text_align: center
+
+              - label:
+                  id: forecast_temp_3
+                  x: 279
+                  y: 184
+                  width: 87
+                  height: 14
+                  text: "--°C / --°C"
+                  text_font: font_micro
+                  text_align: center
+                  long_mode: CLIP
+
+        - obj:
+            id: home_card
+            x: 24
+            y: 270
+            width: 365
+            height: 214
+            bg_color: 0xFFFFFF
+            bg_opa: cover
+            border_color: 0x000000
+            border_width: 1
+            radius: 6
+            pad_all: 0
+            scrollable: false
+            scrollbar_mode: "off"
+            widgets:
+              - label:
+                  x: 18
+                  y: 18
+                  width: 26
+                  height: 26
+                  text: "\U000F06A1"
+                  text_font: font_mdi_26
+
+              - label:
+                  x: 54
+                  y: 20
+                  width: 100
+                  height: 22
+                  text: "DOM"
+                  text_font: font_section
+
+              - label:
+                  x: 26
+                  y: 72
+                  width: 36
+                  height: 44
+                  text: "\U000F050F"
+                  text_font: font_mdi_42
+
+              - label:
+                  x: 77
+                  y: 68
+                  width: 130
+                  height: 20
+                  text: "TEMPERATURA"
+                  text_font: font_small_bold
+
+              - label:
+                  id: indoor_temp_value
+                  x: 76
+                  y: 89
+                  width: 130
+                  height: 40
+                  text: "--°C"
+                  text_font: font_value
+                  long_mode: CLIP
+
+              - obj:
+                  x: 198
+                  y: 66
+                  width: 1
+                  height: 67
+                  bg_color: 0xB8B8B8
+                  bg_opa: cover
+                  border_width: 0
+                  pad_all: 0
+
+              - label:
+                  x: 223
+                  y: 73
+                  width: 38
+                  height: 40
+                  text: "\U000F058E"
+                  text_font: font_mdi_42
+
+              - label:
+                  x: 274
+                  y: 68
+                  width: 82
+                  height: 20
+                  text: "WILGOTNOŚĆ"
+                  text_font: font_small_bold
+
+              - label:
+                  id: indoor_humidity_value
+                  x: 274
+                  y: 89
+                  width: 78
+                  height: 40
+                  text: "--%"
+                  text_font: font_value
+                  long_mode: CLIP
+
+              - obj:
+                  x: 18
+                  y: 144
+                  width: 329
+                  height: 1
+                  bg_color: 0x000000
+                  bg_opa: cover
+                  border_width: 0
+                  pad_all: 0
+
+              - label:
+                  x: 31
+                  y: 160
+                  width: 34
+                  height: 34
+                  text: "\U000F0210"
+                  text_font: font_mdi_42
+
+              - label:
+                  x: 78
+                  y: 164
+                  width: 120
+                  height: 24
+                  text: "WENTYLATOR"
+                  text_font: font_body_bold
+
+              - button:
+                  id: fan_on_btn
+                  x: 205
+                  y: 158
+                  width: 66
+                  height: 34
+                  radius: 17
+                  bg_color: 0xFFFFFF
+                  border_color: 0x000000
+                  border_width: 1
+                  shadow_width: 0
+                  on_click:
+                    - logger.log:
+                        level: INFO
+                        format: "Fan ON clicked"
+                    - homeassistant.service:
+                        service: fan.turn_on
+                        data:
+                          entity_id: ${entity_fan}
+                    - delay: 800ms
+                    - script.execute: refresh_dashboard
+                  widgets:
+                    - label:
+                        id: fan_on_label
+                        x: 0
+                        y: 6
+                        width: 66
+                        height: 20
+                        text: "ON"
+                        text_font: font_body_bold
+                        text_align: center
+
+              - button:
+                  id: fan_off_btn
+                  x: 273
+                  y: 158
+                  width: 66
+                  height: 34
+                  radius: 17
+                  bg_color: 0x000000
+                  border_color: 0x000000
+                  border_width: 1
+                  shadow_width: 0
+                  on_click:
+                    - logger.log:
+                        level: INFO
+                        format: "Fan OFF clicked"
+                    - homeassistant.service:
+                        service: fan.turn_off
+                        data:
+                          entity_id: ${entity_fan}
+                    - delay: 800ms
+                    - script.execute: refresh_dashboard
+                  widgets:
+                    - label:
+                        id: fan_off_label
+                        x: 0
+                        y: 6
+                        width: 66
+                        height: 20
+                        text: "OFF"
+                        text_font: font_body_bold
+                        text_color: 0xFFFFFF
+                        text_align: center
+
+        - obj:
+            id: investments_card
+            x: 405
+            y: 56
+            width: 531
+            height: 428
+            bg_color: 0xFFFFFF
+            bg_opa: cover
+            border_color: 0x000000
+            border_width: 1
+            radius: 6
+            pad_all: 0
+            scrollable: false
+            scrollbar_mode: "off"
+            widgets:
+              - label:
+                  x: 18
+                  y: 18
+                  width: 28
+                  height: 28
+                  text: "\U000F081F"
+                  text_font: font_mdi_26
+
+              - label:
+                  x: 58
+                  y: 20
+                  width: 170
+                  height: 24
+                  text: "INWESTYCJE"
+                  text_font: font_section
+
+              - label:
+                  x: 32
+                  y: 58
+                  width: 138
+                  height: 18
+                  text: "SALDO"
+                  text_font: font_tiny
+                  text_align: center
+
+              - label:
+                  id: xtb_balance_value
+                  x: 12
+                  y: 78
+                  width: 176
+                  height: 34
+                  text: "-- PLN"
+                  text_font: font_value
+                  text_align: center
+                  long_mode: DOT
+
+              - obj:
+                  x: 186
+                  y: 62
+                  width: 1
+                  height: 52
+                  bg_color: 0xB8B8B8
+                  bg_opa: cover
+                  border_width: 0
+                  pad_all: 0
+
+              - label:
+                  x: 198
+                  y: 58
+                  width: 150
+                  height: 18
+                  text: "ZYSK"
+                  text_font: font_tiny
+                  text_align: center
+
+              - label:
+                  id: xtb_profit_value
+                  x: 194
+                  y: 78
+                  width: 158
+                  height: 34
+                  text: "-- PLN"
+                  text_font: font_value
+                  text_align: center
+                  long_mode: DOT
+
+              - obj:
+                  x: 352
+                  y: 62
+                  width: 1
+                  height: 52
+                  bg_color: 0xB8B8B8
+                  bg_opa: cover
+                  border_width: 0
+                  pad_all: 0
+
+              - label:
+                  x: 366
+                  y: 58
+                  width: 150
+                  height: 18
+                  text: "ZYSK %"
+                  text_font: font_tiny
+                  text_align: center
+
+              - label:
+                  id: xtb_profit_percent_value
+                  x: 366
+                  y: 78
+                  width: 150
+                  height: 34
+                  text: "--%"
+                  text_font: font_value
+                  text_align: center
+                  long_mode: DOT
+
+              - obj:
+                  x: 12
+                  y: 125
+                  width: 507
+                  height: 1
+                  bg_color: 0x000000
+                  bg_opa: cover
+                  border_width: 0
+                  pad_all: 0
+
+              - label:
+                  x: 16
+                  y: 136
+                  width: 180
+                  height: 20
+                  text: "INSTRUMENT"
+                  text_font: font_small_bold
+
+              - label:
+                  x: 257
+                  y: 136
+                  width: 118
+                  height: 20
+                  text: "DZIENNA %"
+                  text_font: font_small_bold
+                  text_align: right
+
+              - label:
+                  x: 396
+                  y: 136
+                  width: 112
+                  height: 20
+                  text: "ZYSK"
+                  text_font: font_small_bold
+                  text_align: right
+
+              - obj:
+                  id: positions_list
+                  x: 12
+                  y: 160
+                  width: 507
+                  height: 254
+                  bg_opa: transp
+                  border_width: 0
+                  pad_all: 0
+                  scrollable: true
+                  scroll_dir: ver
+                  scrollbar_mode: active
+                  widgets:
+                    - obj:
+                        id: position_row_0
+                        x: 0
+                        y: 0
+                        width: 500
+                        height: 30
+                        bg_opa: transp
+                        border_width: 0
+                        pad_all: 0
+                        scrollable: false
+                        widgets:
+                          - label:
+                              id: position_name_0
+                              x: 0
+                              y: 6
+                              width: 250
+                              height: 20
+                              text: "Brak danych z XTB"
+                              text_font: font_small
+                              long_mode: DOT
+                          - label:
+                              id: position_daily_0
+                              x: 270
+                              y: 6
+                              width: 105
+                              height: 20
+                              text: "--%"
+                              text_font: font_small
+                              text_align: right
+                          - label:
+                              id: position_profit_0
+                              x: 390
+                              y: 6
+                              width: 108
+                              height: 20
+                              text: "-- PLN"
+                              text_font: font_small
+                              text_align: right
+                          - obj:
+                              x: 0
+                              y: 29
+                              width: 500
+                              height: 1
+                              bg_color: 0xB8B8B8
+                              bg_opa: cover
+                              border_width: 0
+                              pad_all: 0
+
+                    - obj:
+                        id: position_row_1
+                        x: 0
+                        y: 30
+                        width: 500
+                        height: 30
+                        bg_opa: transp
+                        border_width: 0
+                        pad_all: 0
+                        scrollable: false
+                        widgets:
+                          - label:
+                              id: position_name_1
+                              x: 0
+                              y: 6
+                              width: 250
+                              height: 20
+                              text: ""
+                              text_font: font_small
+                              long_mode: DOT
+                          - label:
+                              id: position_daily_1
+                              x: 270
+                              y: 6
+                              width: 105
+                              height: 20
+                              text: ""
+                              text_font: font_small
+                              text_align: right
+                          - label:
+                              id: position_profit_1
+                              x: 390
+                              y: 6
+                              width: 108
+                              height: 20
+                              text: ""
+                              text_font: font_small
+                              text_align: right
+                          - obj:
+                              x: 0
+                              y: 29
+                              width: 500
+                              height: 1
+                              bg_color: 0xB8B8B8
+                              bg_opa: cover
+                              border_width: 0
+                              pad_all: 0
+
+                    - obj:
+                        id: position_row_2
+                        x: 0
+                        y: 60
+                        width: 500
+                        height: 30
+                        bg_opa: transp
+                        border_width: 0
+                        pad_all: 0
+                        scrollable: false
+                        widgets:
+                          - label:
+                              id: position_name_2
+                              x: 0
+                              y: 6
+                              width: 250
+                              height: 20
+                              text: ""
+                              text_font: font_small
+                              long_mode: DOT
+                          - label:
+                              id: position_daily_2
+                              x: 270
+                              y: 6
+                              width: 105
+                              height: 20
+                              text: ""
+                              text_font: font_small
+                              text_align: right
+                          - label:
+                              id: position_profit_2
+                              x: 390
+                              y: 6
+                              width: 108
+                              height: 20
+                              text: ""
+                              text_font: font_small
+                              text_align: right
+                          - obj:
+                              x: 0
+                              y: 29
+                              width: 500
+                              height: 1
+                              bg_color: 0xB8B8B8
+                              bg_opa: cover
+                              border_width: 0
+                              pad_all: 0
+
+                    - obj:
+                        id: position_row_3
+                        x: 0
+                        y: 90
+                        width: 500
+                        height: 30
+                        bg_opa: transp
+                        border_width: 0
+                        pad_all: 0
+                        scrollable: false
+                        widgets:
+                          - label:
+                              id: position_name_3
+                              x: 0
+                              y: 6
+                              width: 250
+                              height: 20
+                              text: ""
+                              text_font: font_small
+                              long_mode: DOT
+                          - label:
+                              id: position_daily_3
+                              x: 270
+                              y: 6
+                              width: 105
+                              height: 20
+                              text: ""
+                              text_font: font_small
+                              text_align: right
+                          - label:
+                              id: position_profit_3
+                              x: 390
+                              y: 6
+                              width: 108
+                              height: 20
+                              text: ""
+                              text_font: font_small
+                              text_align: right
+                          - obj:
+                              x: 0
+                              y: 29
+                              width: 500
+                              height: 1
+                              bg_color: 0xB8B8B8
+                              bg_opa: cover
+                              border_width: 0
+                              pad_all: 0
+
+                    - obj:
+                        id: position_row_4
+                        x: 0
+                        y: 120
+                        width: 500
+                        height: 30
+                        bg_opa: transp
+                        border_width: 0
+                        pad_all: 0
+                        scrollable: false
+                        widgets:
+                          - label:
+                              id: position_name_4
+                              x: 0
+                              y: 6
+                              width: 250
+                              height: 20
+                              text: ""
+                              text_font: font_small
+                              long_mode: DOT
+                          - label:
+                              id: position_daily_4
+                              x: 270
+                              y: 6
+                              width: 105
+                              height: 20
+                              text: ""
+                              text_font: font_small
+                              text_align: right
+                          - label:
+                              id: position_profit_4
+                              x: 390
+                              y: 6
+                              width: 108
+                              height: 20
+                              text: ""
+                              text_font: font_small
+                              text_align: right
+                          - obj:
+                              x: 0
+                              y: 29
+                              width: 500
+                              height: 1
+                              bg_color: 0xB8B8B8
+                              bg_opa: cover
+                              border_width: 0
+                              pad_all: 0
+
+                    - obj:
+                        id: position_row_5
+                        x: 0
+                        y: 150
+                        width: 500
+                        height: 30
+                        bg_opa: transp
+                        border_width: 0
+                        pad_all: 0
+                        scrollable: false
+                        widgets:
+                          - label:
+                              id: position_name_5
+                              x: 0
+                              y: 6
+                              width: 250
+                              height: 20
+                              text: ""
+                              text_font: font_small
+                              long_mode: DOT
+                          - label:
+                              id: position_daily_5
+                              x: 270
+                              y: 6
+                              width: 105
+                              height: 20
+                              text: ""
+                              text_font: font_small
+                              text_align: right
+                          - label:
+                              id: position_profit_5
+                              x: 390
+                              y: 6
+                              width: 108
+                              height: 20
+                              text: ""
+                              text_font: font_small
+                              text_align: right
+                          - obj:
+                              x: 0
+                              y: 29
+                              width: 500
+                              height: 1
+                              bg_color: 0xB8B8B8
+                              bg_opa: cover
+                              border_width: 0
+                              pad_all: 0
+
+                    - obj:
+                        id: position_row_6
+                        x: 0
+                        y: 180
+                        width: 500
+                        height: 30
+                        bg_opa: transp
+                        border_width: 0
+                        pad_all: 0
+                        scrollable: false
+                        widgets:
+                          - label:
+                              id: position_name_6
+                              x: 0
+                              y: 6
+                              width: 250
+                              height: 20
+                              text: ""
+                              text_font: font_small
+                              long_mode: DOT
+                          - label:
+                              id: position_daily_6
+                              x: 270
+                              y: 6
+                              width: 105
+                              height: 20
+                              text: ""
+                              text_font: font_small
+                              text_align: right
+                          - label:
+                              id: position_profit_6
+                              x: 390
+                              y: 6
+                              width: 108
+                              height: 20
+                              text: ""
+                              text_font: font_small
+                              text_align: right
+                          - obj:
+                              x: 0
+                              y: 29
+                              width: 500
+                              height: 1
+                              bg_color: 0xB8B8B8
+                              bg_opa: cover
+                              border_width: 0
+                              pad_all: 0
+
+                    - obj:
+                        id: position_row_7
+                        x: 0
+                        y: 210
+                        width: 500
+                        height: 30
+                        bg_opa: transp
+                        border_width: 0
+                        pad_all: 0
+                        scrollable: false
+                        widgets:
+                          - label:
+                              id: position_name_7
+                              x: 0
+                              y: 6
+                              width: 250
+                              height: 20
+                              text: ""
+                              text_font: font_small
+                              long_mode: DOT
+                          - label:
+                              id: position_daily_7
+                              x: 270
+                              y: 6
+                              width: 105
+                              height: 20
+                              text: ""
+                              text_font: font_small
+                              text_align: right
+                          - label:
+                              id: position_profit_7
+                              x: 390
+                              y: 6
+                              width: 108
+                              height: 20
+                              text: ""
+                              text_font: font_small
+                              text_align: right
+                          - obj:
+                              x: 0
+                              y: 29
+                              width: 500
+                              height: 1
+                              bg_color: 0xB8B8B8
+                              bg_opa: cover
+                              border_width: 0
+                              pad_all: 0
+
+                    - obj:
+                        id: position_row_8
+                        x: 0
+                        y: 240
+                        width: 500
+                        height: 30
+                        bg_opa: transp
+                        border_width: 0
+                        pad_all: 0
+                        scrollable: false
+                        widgets:
+                          - label:
+                              id: position_name_8
+                              x: 0
+                              y: 6
+                              width: 250
+                              height: 20
+                              text: ""
+                              text_font: font_small
+                              long_mode: DOT
+                          - label:
+                              id: position_daily_8
+                              x: 270
+                              y: 6
+                              width: 105
+                              height: 20
+                              text: ""
+                              text_font: font_small
+                              text_align: right
+                          - label:
+                              id: position_profit_8
+                              x: 390
+                              y: 6
+                              width: 108
+                              height: 20
+                              text: ""
+                              text_font: font_small
+                              text_align: right
+                          - obj:
+                              x: 0
+                              y: 29
+                              width: 500
+                              height: 1
+                              bg_color: 0xB8B8B8
+                              bg_opa: cover
+                              border_width: 0
+                              pad_all: 0
+
+                    - obj:
+                        id: position_row_9
+                        x: 0
+                        y: 270
+                        width: 500
+                        height: 30
+                        bg_opa: transp
+                        border_width: 0
+                        pad_all: 0
+                        scrollable: false
+                        widgets:
+                          - label:
+                              id: position_name_9
+                              x: 0
+                              y: 6
+                              width: 250
+                              height: 20
+                              text: ""
+                              text_font: font_small
+                              long_mode: DOT
+                          - label:
+                              id: position_daily_9
+                              x: 270
+                              y: 6
+                              width: 105
+                              height: 20
+                              text: ""
+                              text_font: font_small
+                              text_align: right
+                          - label:
+                              id: position_profit_9
+                              x: 390
+                              y: 6
+                              width: 108
+                              height: 20
+                              text: ""
+                              text_font: font_small
+                              text_align: right
+                          - obj:
+                              x: 0
+                              y: 29
+                              width: 500
+                              height: 1
+                              bg_color: 0xB8B8B8
+                              bg_opa: cover
+                              border_width: 0
+                              pad_all: 0
+
+script:
+  - id: refresh_dashboard
+    mode: restart
+    then:
+      - logger.log:
+          level: INFO
+          format: "Refreshing LVGL dashboard"
+      - lambda: |-
+          auto set_label = [](lv_obj_t *label, const std::string &text) {
+            lv_label_set_text(label, text.c_str());
+          };
+
+          auto compact_spaces = [](std::string value) {
+            value.erase(std::remove(value.begin(), value.end(), '\r'), value.end());
+            value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
+            while (value.find("  ") != std::string::npos) {
+              value.replace(value.find("  "), 2, " ");
             }
+            return value;
           };
-          auto vline_t = [&](int x, int y1, int y2, Color color, int t = 1) {
-            for (int i = 0; i < t; i++) {
-              it.line(x + i, y1, x + i, y2, color);
-            }
-          };
-          auto round_rect = [&](int x, int y, int w, int h, int r, Color color) {
-            int x2 = x + w - 1;
-            int y2 = y + h - 1;
-            it.line(x + r, y, x2 - r, y, color);
-            it.line(x + r, y2, x2 - r, y2, color);
-            it.line(x, y + r, x, y2 - r, color);
-            it.line(x2, y + r, x2, y2 - r, color);
-            for (int dx = 0; dx <= r; dx++) {
-              int dy = r - (int) sqrtf((float) (r * r - dx * dx));
-              it.draw_pixel_at(x + r - dx, y + dy, color);
-              it.draw_pixel_at(x2 - r + dx, y + dy, color);
-              it.draw_pixel_at(x + r - dx, y2 - dy, color);
-              it.draw_pixel_at(x2 - r + dx, y2 - dy, color);
-            }
-          };
-          auto filled_pill = [&](int x, int y, int w, int h, Color color) {
-            int r = h / 2;
-            it.filled_rectangle(x + r, y, w - 2 * r, h, color);
-            it.filled_circle(x + r, y + r, r, color);
-            it.filled_circle(x + w - r - 1, y + r, r, color);
-          };
-          auto outline_pill = [&](int x, int y, int w, int h, Color color) {
-            int r = h / 2;
-            it.line(x + r, y, x + w - r - 1, y, color);
-            it.line(x + r, y + h - 1, x + w - r - 1, y + h - 1, color);
-            it.circle(x + r, y + r, r, color);
-            it.circle(x + w - r - 1, y + r, r, color);
-          };
-          auto fmt_decimal = [&](float value, int decimals, const char *unit) -> std::string {
-            if (isnan(value)) {
-              return std::string("--") + unit;
-            }
-            char fmt[10];
-            char buf[32];
-            snprintf(fmt, sizeof(fmt), "%%.%df", decimals);
-            snprintf(buf, sizeof(buf), fmt, value);
-            std::string out(buf);
-            for (char &c : out) {
-              if (c == '.') c = ',';
-            }
-            out += unit;
-            return out;
-          };
-          auto signed_decimal = [&](float value, int decimals, const char *unit) -> std::string {
-            std::string out = fmt_decimal(value, decimals, unit);
-            if (!isnan(value) && value > 0) {
-              out.insert(0, "+");
-            }
-            return out;
-          };
-          auto group_int = [](long value) -> std::string {
-            bool neg = value < 0;
-            unsigned long v = neg ? (unsigned long) -value : (unsigned long) value;
-            std::string s = std::to_string(v);
-            for (int i = (int) s.length() - 3; i > 0; i -= 3) {
-              s.insert((size_t) i, " ");
-            }
-            if (neg) s.insert(0, "-");
-            return s;
-          };
-          auto money = [&](float value, const std::string &currency, bool sign = false) -> std::string {
-            if (isnan(value)) {
-              return "-- " + currency;
-            }
-            long rounded = lroundf(value);
-            std::string out = group_int(rounded);
-            if (sign && rounded > 0) out.insert(0, "+");
-            out += " ";
-            out += currency;
-            return out;
-          };
-          auto number_after = [](const std::string &src, const char *key, float fallback) -> float {
-            size_t pos = src.find(key);
+
+          auto number_from = [](const std::string &text, const std::string &key, float fallback) {
+            auto pos = text.find("\"" + key + "\"");
+            if (pos == std::string::npos) pos = text.find("'" + key + "'");
             if (pos == std::string::npos) return fallback;
-            pos = src.find(':', pos);
+            pos = text.find(':', pos);
             if (pos == std::string::npos) return fallback;
             pos++;
-            while (pos < src.size() && (src[pos] == ' ' || src[pos] == '"' || src[pos] == '\'')) pos++;
-            std::string raw;
-            while (pos < src.size()) {
-              char c = src[pos++];
-              if ((c >= '0' && c <= '9') || c == '-' || c == '+' || c == '.' || c == ',') {
-                raw.push_back(c == ',' ? '.' : c);
-              } else if (!raw.empty()) {
-                break;
-              }
-            }
-            if (raw.empty()) return fallback;
-            return atof(raw.c_str());
+            while (pos < text.size() && (text[pos] == ' ' || text[pos] == '"')) pos++;
+            size_t end = pos;
+            while (end < text.size() && (isdigit(text[end]) || text[end] == '-' || text[end] == '+' || text[end] == '.' || text[end] == ',')) end++;
+            if (end <= pos) return fallback;
+            std::string raw = text.substr(pos, end - pos);
+            std::replace(raw.begin(), raw.end(), ',', '.');
+            return strtof(raw.c_str(), nullptr);
           };
-          auto nth_number_after = [&](const std::string &src, const char *key, int index, float fallback) -> float {
-            size_t pos = 0;
-            const size_t key_len = std::string(key).length();
-            for (int i = 0; i <= index; i++) {
-              pos = src.find(key, pos);
-              if (pos == std::string::npos) return fallback;
-              if (i == index) {
-                return number_after(src.substr(pos), key, fallback);
-              }
-              pos += key_len;
+
+          auto text_from = [](const std::string &text, const std::string &key) {
+            auto pos = text.find("\"" + key + "\"");
+            if (pos == std::string::npos) pos = text.find("'" + key + "'");
+            if (pos == std::string::npos) return std::string();
+            pos = text.find(':', pos);
+            if (pos == std::string::npos) return std::string();
+            pos++;
+            while (pos < text.size() && text[pos] == ' ') pos++;
+            if (pos >= text.size()) return std::string();
+            char quote = text[pos];
+            if (quote != '"' && quote != '\'') return std::string();
+            pos++;
+            size_t end = pos;
+            while (end < text.size() && text[end] != quote) {
+              if (text[end] == '\\' && end + 1 < text.size()) end++;
+              end++;
             }
-            return fallback;
+            if (end <= pos) return std::string();
+            return text.substr(pos, end - pos);
           };
-          auto nth_object = [](const std::string &src, int index) -> std::string {
-            size_t pos = 0;
-            for (int i = 0; i <= index; i++) {
-              pos = src.find('{', pos);
-              if (pos == std::string::npos) return "";
-              int depth = 0;
-              size_t end = pos;
-              for (; end < src.size(); end++) {
-                if (src[end] == '{') depth++;
-                if (src[end] == '}') {
-                  depth--;
-                  if (depth == 0) break;
+
+          auto nth_object = [](const std::string &text, int wanted) {
+            int depth = 0;
+            int index = -1;
+            size_t start = std::string::npos;
+            bool in_string = false;
+            char quote = 0;
+            for (size_t i = 0; i < text.size(); i++) {
+              char c = text[i];
+              if (in_string) {
+                if (c == '\\') {
+                  i++;
+                } else if (c == quote) {
+                  in_string = false;
+                }
+                continue;
+              }
+              if (c == '"' || c == '\'') {
+                in_string = true;
+                quote = c;
+                continue;
+              }
+              if (c == '{') {
+                if (depth == 0) {
+                  index++;
+                  start = i;
+                }
+                depth++;
+              } else if (c == '}') {
+                depth--;
+                if (depth == 0 && index == wanted && start != std::string::npos) {
+                  return text.substr(start, i - start + 1);
                 }
               }
-              if (end == std::string::npos || end >= src.size()) return "";
-              if (i == index) return src.substr(pos, end - pos + 1);
-              pos = end + 1;
             }
-            return "";
+            return std::string();
           };
-          auto field_text = [](const std::string &obj, const char *key, const char *fallback) -> std::string {
-            size_t pos = obj.find(key);
-            if (pos == std::string::npos) return fallback;
-            pos = obj.find(':', pos);
-            if (pos == std::string::npos) return fallback;
-            pos++;
-            while (pos < obj.size() && (obj[pos] == ' ' || obj[pos] == '"' || obj[pos] == '\'')) pos++;
+
+          auto group_int = [](int value) {
+            bool negative = value < 0;
+            int abs_value = negative ? -value : value;
+            std::string raw = to_string(abs_value);
             std::string out;
-            while (pos < obj.size()) {
-              char c = obj[pos++];
-              if (c == '"' || c == '\'' || c == ',' || c == '}') break;
-              out.push_back(c);
+            int count = 0;
+            for (int i = raw.size() - 1; i >= 0; i--) {
+              if (count == 3) {
+                out.insert(out.begin(), ' ');
+                count = 0;
+              }
+              out.insert(out.begin(), raw[i]);
+              count++;
             }
-            while (!out.empty() && out.back() == ' ') out.pop_back();
-            if (out.empty() || out == "None" || out == "null") return fallback;
+            if (negative) out.insert(out.begin(), '-');
             return out;
           };
-          auto truncate = [](std::string value, size_t limit) -> std::string {
-            if (value.length() <= limit) return value;
-            return value.substr(0, limit - 1) + ".";
-          };
-          auto condition_lines = [](const std::string &condition, std::string &l1, std::string &l2) {
-            if (condition.find("partly") != std::string::npos || condition.find("partlycloudy") != std::string::npos) {
-              l1 = "Częściowe";
-              l2 = "zachmurzenie";
-            } else if (condition.find("cloud") != std::string::npos) {
-              l1 = "Zachmurzenie";
-              l2 = "";
-            } else if (condition.find("rain") != std::string::npos || condition.find("pour") != std::string::npos) {
-              l1 = "Deszcz";
-              l2 = "";
-            } else if (condition.find("sun") != std::string::npos || condition.find("clear") != std::string::npos) {
-              l1 = "Słonecznie";
-              l2 = "";
-            } else if (condition.empty() || condition == "unknown" || condition == "unavailable") {
-              l1 = "Brak danych";
-              l2 = "";
-            } else {
-              l1 = condition;
-              l2 = "";
-            }
-          };
-          auto draw_weather_icon = [&](int x, int y, int scale) {
-            int s = scale;
-            line_t(x + 36*s, y + 2*s, x + 36*s, y + 14*s, black, 2);
-            line_t(x + 7*s, y + 36*s, x + 20*s, y + 36*s, black, 2);
-            line_t(x + 13*s, y + 13*s, x + 22*s, y + 22*s, black, 2);
-            line_t(x + 13*s, y + 59*s, x + 22*s, y + 50*s, black, 2);
-            it.circle(x + 36*s, y + 36*s, 22*s, black);
-            it.filled_circle(x + 48*s, y + 54*s, 22*s, white);
-            it.filled_circle(x + 30*s, y + 60*s, 15*s, white);
-            it.filled_rectangle(x + 30*s, y + 54*s, 52*s, 28*s, white);
-            it.circle(x + 48*s, y + 54*s, 22*s, black);
-            it.circle(x + 30*s, y + 60*s, 15*s, black);
-            line_t(x + 30*s, y + 75*s, x + 80*s, y + 75*s, black, 2);
-          };
-          auto draw_small_weather = [&](int cx, int cy, int variant) {
-            if (variant == 2) {
-              it.circle(cx, cy, 11, black);
-              line_t(cx, cy - 20, cx, cy - 15, black, 1);
-              line_t(cx, cy + 15, cx, cy + 20, black, 1);
-              line_t(cx - 20, cy, cx - 15, cy, black, 1);
-              line_t(cx + 15, cy, cx + 20, cy, black, 1);
-              line_t(cx - 14, cy - 14, cx - 10, cy - 10, black, 1);
-              line_t(cx + 10, cy + 10, cx + 14, cy + 14, black, 1);
-              line_t(cx - 14, cy + 14, cx - 10, cy + 10, black, 1);
-              line_t(cx + 10, cy - 10, cx + 14, cy - 14, black, 1);
-            } else {
-              if (variant == 0) {
-                it.circle(cx - 11, cy - 5, 12, black);
-                line_t(cx - 11, cy - 23, cx - 11, cy - 18, black, 1);
-                line_t(cx - 29, cy - 5, cx - 24, cy - 5, black, 1);
-                line_t(cx - 24, cy - 18, cx - 20, cy - 14, black, 1);
-              }
-              it.filled_circle(cx + 6, cy + 2, 14, white);
-              it.filled_circle(cx - 9, cy + 7, 10, white);
-              it.filled_rectangle(cx - 10, cy + 2, 34, 18, white);
-              it.circle(cx + 6, cy + 2, 14, black);
-              it.circle(cx - 9, cy + 7, 10, black);
-              line_t(cx - 9, cy + 17, cx + 25, cy + 17, black, 1);
-              if (variant == 1) {
-                line_t(cx - 8, cy + 26, cx - 12, cy + 32, black, 1);
-                line_t(cx + 6, cy + 26, cx + 2, cy + 34, black, 1);
-                line_t(cx + 20, cy + 26, cx + 16, cy + 32, black, 1);
-              }
-            }
-          };
-          auto draw_house_icon = [&]() {
-            it.circle(55, 326, 16, black);
-            it.line(47, 328, 55, 320, black);
-            it.line(55, 320, 63, 328, black);
-            it.rectangle(49, 328, 12, 11, black);
-            it.rectangle(54, 333, 4, 6, black);
-          };
-          auto draw_thermo = [&]() {
-            it.circle(71, 389, 8, black);
-            it.filled_circle(71, 389, 4, black);
-            it.rectangle(67, 352, 8, 32, black);
-            it.filled_rectangle(70, 359, 2, 29, black);
-          };
-          auto draw_drop = [&]() {
-            it.line(260, 352, 244, 382, black);
-            it.line(260, 352, 276, 382, black);
-            it.circle(260, 383, 17, black);
-            it.filled_rectangle(244, 366, 33, 18, white);
-            it.line(244, 382, 276, 382, black);
-            it.line(252, 391, 246, 386, black);
-          };
-          auto draw_fan = [&]() {
-            it.circle(61, 444, 4, black);
-            it.circle(61, 430, 9, black);
-            it.circle(75, 444, 9, black);
-            it.circle(61, 458, 9, black);
-            it.circle(47, 444, 9, black);
-          };
-          auto draw_invest_icon = [&]() {
-            it.circle(428, 86, 16, black);
-            it.rectangle(421, 90, 4, 8, black);
-            it.rectangle(428, 84, 4, 14, black);
-            it.rectangle(435, 78, 4, 20, black);
-          };
-          auto draw_spark = [&](int x, int y, int w, int h, int pattern) {
-            const int pts[5][12] = {
-              {8, 7, 9, 6, 8, 5, 6, 7, 5, 4, 3, 1},
-              {5, 4, 6, 3, 2, 4, 8, 7, 9, 8, 7, 7},
-              {6, 5, 7, 5, 4, 6, 5, 8, 7, 5, 4, 2},
-              {8, 6, 7, 5, 6, 8, 7, 4, 3, 4, 2, 1},
-              {3, 6, 9, 8, 7, 8, 6, 5, 3, 4, 6, 8}
-            };
-            int px = x;
-            int py = y + pts[pattern][0] * h / 10;
-            for (int i = 1; i < 12; i++) {
-              int nx = x + i * w / 11;
-              int ny = y + pts[pattern][i] * h / 10;
-              it.line(px, py, nx, ny, black);
-              px = nx;
-              py = ny;
-            }
+
+          auto money = [&](float value, const std::string &currency) {
+            if (isnan(value)) return std::string("-- ") + currency;
+            int rounded = (int) roundf(value);
+            std::string prefix = rounded > 0 ? "+" : "";
+            return prefix + group_int(rounded) + " " + currency;
           };
 
-          const char *days[] = {"Nd", "Pn", "Wt", "Śr", "Czw", "Pt", "Sob"};
-          const char *months[] = {"sty", "lut", "mar", "kwi", "maj", "cze", "lip", "sie", "wrz", "paź", "lis", "gru"};
+          auto plain_money = [&](float value, const std::string &currency) {
+            if (isnan(value)) return std::string("-- ") + currency;
+            return group_int((int) roundf(value)) + " " + currency;
+          };
+
+          auto percent = [](float value) {
+            if (isnan(value)) return std::string("--%");
+            char buffer[24];
+            snprintf(buffer, sizeof(buffer), "%+.1f%%", value);
+            std::string out(buffer);
+            std::replace(out.begin(), out.end(), '.', ',');
+            return out;
+          };
+
+          auto temp = [](float value, bool decimal) {
+            if (isnan(value)) return std::string("--°C");
+            char buffer[24];
+            snprintf(buffer, sizeof(buffer), decimal ? "%.1f°C" : "%.0f°C", value);
+            std::string out(buffer);
+            std::replace(out.begin(), out.end(), '.', ',');
+            return out;
+          };
+
+          auto hum = [](float value) {
+            if (isnan(value)) return std::string("--%");
+            char buffer[16];
+            snprintf(buffer, sizeof(buffer), "%.0f%%", value);
+            return std::string(buffer);
+          };
+
+          auto describe_weather = [](std::string condition) {
+            if (condition == "sunny") return std::string("Słonecznie");
+            if (condition == "partlycloudy" || condition == "partly_cloudy") return std::string("Częściowe zachmurzenie");
+            if (condition == "cloudy") return std::string("Zachmurzenie");
+            if (condition == "rainy" || condition == "pouring") return std::string("Deszcz");
+            if (condition == "snowy") return std::string("Śnieg");
+            if (condition == "fog") return std::string("Mgła");
+            if (condition == "clear-night") return std::string("Bezchmurnie");
+            if (condition.empty() || condition == "unknown" || condition == "unavailable") return std::string("Brak danych");
+            condition[0] = toupper(condition[0]);
+            return condition;
+          };
+
           auto now = id(ha_time).now();
-          char date_buf[24] = "--";
           if (now.is_valid()) {
-            snprintf(date_buf, sizeof(date_buf), "%s, %u %s", days[now.day_of_week - 1], now.day_of_month, months[now.month - 1]);
+            const char *days[] = {"Nd", "Pn", "Wt", "Śr", "Cz", "Pt", "Sb"};
+            const char *months[] = {"sty", "lut", "mar", "kwi", "maj", "cze", "lip", "sie", "wrz", "paź", "lis", "gru"};
+            char date_buffer[24];
+            snprintf(date_buffer, sizeof(date_buffer), "%s, %d %s", days[now.day_of_week - 1], now.day_of_month, months[now.month - 1]);
+            char time_buffer[8];
+            snprintf(time_buffer, sizeof(time_buffer), "%02d:%02d", now.hour, now.minute);
+            set_label(id(header_date), date_buffer);
+            set_label(id(header_time), time_buffer);
           }
 
-          float weather_temp = id(weather_temperature).state;
-          float indoor_temp = id(indoor_temperature).state;
-          float indoor_hum = id(indoor_humidity).state;
-          std::string condition = id(weather_condition).state;
-          std::string condition_l1;
-          std::string condition_l2;
-          condition_lines(condition, condition_l1, condition_l2);
+          set_label(id(weather_temp_value), temp(id(weather_temperature).state, false));
+          set_label(id(weather_condition_value), describe_weather(id(weather_condition).state));
+          set_label(id(indoor_temp_value), temp(id(indoor_temperature).state, true));
+          set_label(id(indoor_humidity_value), hum(id(indoor_humidity).state));
 
           std::string currency = id(xtb_currency).state;
           if (currency.empty() || currency == "unknown" || currency == "unavailable") currency = "PLN";
           std::string summary = id(xtb_summary).state;
           float balance = id(xtb_balance).state;
-          float profit = number_after(summary, "profit_net", NAN);
-          if (isnan(profit)) profit = number_after(summary, "position_profit_net", NAN);
-          float profit_pct = number_after(summary, "profit_percent", NAN);
+          if (isnan(balance)) balance = number_from(summary, "side_bar_account_value", NAN);
+          if (isnan(balance)) balance = number_from(summary, "total_equity", NAN);
+          float profit = number_from(summary, "profit_net", NAN);
+          float profit_percent = number_from(summary, "profit_percent", NAN);
+          set_label(id(xtb_balance_value), plain_money(balance, currency));
+          set_label(id(xtb_profit_value), money(profit, currency));
+          set_label(id(xtb_profit_percent_value), percent(profit_percent));
+
           bool fan_on = id(fan_state).state == "on";
+          lv_obj_set_style_bg_color(id(fan_on_btn), lv_color_hex(fan_on ? 0x000000 : 0xFFFFFF), LV_PART_MAIN);
+          lv_obj_set_style_bg_color(id(fan_off_btn), lv_color_hex(fan_on ? 0xFFFFFF : 0x000000), LV_PART_MAIN);
+          lv_obj_set_style_text_color(id(fan_on_label), lv_color_hex(fan_on ? 0xFFFFFF : 0x000000), LV_PART_MAIN);
+          lv_obj_set_style_text_color(id(fan_off_label), lv_color_hex(fan_on ? 0x000000 : 0xFFFFFF), LV_PART_MAIN);
 
-          line_t(27, 46, 768, 46, black, 1);
-          it.print(780, 28, id(font_body), black, TextAlign::CENTER_LEFT, date_buf);
-          vline_t(847, 20, 45, black, 1);
-          it.strftime(864, 12, id(font_time), black, TextAlign::TOP_LEFT, "%H:%M", now);
+          lv_obj_t *rows[] = {
+            id(position_row_0), id(position_row_1), id(position_row_2), id(position_row_3), id(position_row_4),
+            id(position_row_5), id(position_row_6), id(position_row_7), id(position_row_8), id(position_row_9)
+          };
+          lv_obj_t *names[] = {
+            id(position_name_0), id(position_name_1), id(position_name_2), id(position_name_3), id(position_name_4),
+            id(position_name_5), id(position_name_6), id(position_name_7), id(position_name_8), id(position_name_9)
+          };
+          lv_obj_t *daily[] = {
+            id(position_daily_0), id(position_daily_1), id(position_daily_2), id(position_daily_3), id(position_daily_4),
+            id(position_daily_5), id(position_daily_6), id(position_daily_7), id(position_daily_8), id(position_daily_9)
+          };
+          lv_obj_t *profits[] = {
+            id(position_profit_0), id(position_profit_1), id(position_profit_2), id(position_profit_3), id(position_profit_4),
+            id(position_profit_5), id(position_profit_6), id(position_profit_7), id(position_profit_8), id(position_profit_9)
+          };
 
-          round_rect(27, 47, 360, 243, 7, black);
-          it.circle(57, 72, 17, black);
-          draw_small_weather(57, 72, 0);
-          it.print(84, 65, id(font_section), black, "POGODA");
-          draw_weather_icon(61, 92, 2);
-          it.print(224, 96, id(font_temp), black, fmt_decimal(weather_temp, 0, "°C").c_str());
-          it.print(225, 157, id(font_body), black, condition_l1.c_str());
-          if (!condition_l2.empty()) {
-            it.print(225, 181, id(font_body), black, condition_l2.c_str());
-          }
-          line_t(38, 197, 376, 197, black, 1);
-          round_rect(38, 197, 338, 84, 6, black);
-          std::string forecast = id(weather_forecast).state;
-          for (int i = 0; i < 4; i++) {
-            int x = 38 + i * 84;
-            if (i > 0) vline_t(x, 207, 268, gray, 1);
-            int day_index = now.is_valid() ? (now.day_of_week - 1 + i + 1) % 7 : (i + 3) % 7;
-            it.print(x + 42, 208, id(font_small_bold), black, TextAlign::TOP_CENTER, days[day_index]);
-            draw_small_weather(x + 42, 242, i == 1 ? 1 : (i == 2 ? 2 : 0));
-            float high = nth_number_after(forecast, "temperature", i, NAN);
-            float low = nth_number_after(forecast, "templow", i, NAN);
-            if (isnan(high)) high = weather_temp + (i == 2 ? 3 : (i == 1 ? -1 : 1));
-            if (isnan(low)) low = high - 8;
-            char day_buf[28];
-            snprintf(day_buf, sizeof(day_buf), "%.0f°C / %.0f°C", high, low);
-            it.print(x + 42, 260, id(font_tiny), black, TextAlign::TOP_CENTER, day_buf);
-          }
-
-          round_rect(27, 304, 360, 171, 7, black);
-          draw_house_icon();
-          it.print(82, 319, id(font_section), black, "DOM");
-          draw_thermo();
-          it.print(99, 354, id(font_small_bold), black, "TEMPERATURA");
-          it.print(99, 373, id(font_value), black, fmt_decimal(indoor_temp, 1, "°C").c_str());
-          vline_t(214, 349, 404, gray, 1);
-          draw_drop();
-          it.print(283, 354, id(font_small_bold), black, "WILGOTNOŚĆ");
-          it.print(292, 373, id(font_value), black, fmt_decimal(indoor_hum, 0, "%").c_str());
-          line_t(38, 414, 376, 414, black, 1);
-          draw_fan();
-          it.print(99, 440, id(font_body_bold), black, "WENTYLATOR");
-          outline_pill(221, 431, 136, 31, black);
-          if (fan_on) {
-            filled_pill(221, 431, 72, 31, black);
-            it.print(257, 437, id(font_body_bold), white, TextAlign::TOP_CENTER, "ON");
-            it.print(323, 437, id(font_body_bold), black, TextAlign::TOP_CENTER, "OFF");
-          } else {
-            filled_pill(287, 431, 70, 31, black);
-            it.print(257, 437, id(font_body_bold), black, TextAlign::TOP_CENTER, "ON");
-            it.print(323, 437, id(font_body_bold), white, TextAlign::TOP_CENTER, "OFF");
-          }
-
-          round_rect(402, 60, 531, 415, 7, black);
-          draw_invest_icon();
-          it.print(451, 75, id(font_section), black, "INWESTYCJE");
-          it.print(450, 108, id(font_small), black, "SALDO");
-          it.print(450, 127, id(font_value), black, money(balance, currency, false).c_str());
-          vline_t(600, 100, 143, gray, 1);
-          it.print(660, 108, id(font_small), black, TextAlign::TOP_CENTER, "ZYSK");
-          it.print(660, 127, id(font_value), black, TextAlign::TOP_CENTER, money(profit, currency, true).c_str());
-          vline_t(768, 100, 143, gray, 1);
-          it.print(846, 108, id(font_small), black, TextAlign::TOP_CENTER, "ZYSK %");
-          it.print(846, 127, id(font_value), black, TextAlign::TOP_CENTER, signed_decimal(profit_pct, 1, "%").c_str());
-          line_t(412, 158, 920, 158, gray, 1);
-          it.print(416, 171, id(font_small_bold), black, "ZYSK W CZASIE");
-          int chart_x = 448;
-          int chart_y = 190;
-          int chart_w = 465;
-          int chart_h = 92;
-          line_t(chart_x, chart_y + 26, chart_x + chart_w, chart_y + 26, line_gray, 1);
-          line_t(chart_x, chart_y + 55, chart_x + chart_w, chart_y + 55, black, 1);
-          line_t(chart_x, chart_y + 82, chart_x + chart_w, chart_y + 82, line_gray, 1);
-          for (int x = chart_x; x < chart_x + chart_w; x += 8) {
-            it.draw_pixel_at(x, chart_y + 1, gray);
-            it.draw_pixel_at(x, chart_y + 28, gray);
-            it.draw_pixel_at(x, chart_y + 83, gray);
-          }
-          it.print(414, chart_y - 4, id(font_small), black, "+20%");
-          it.print(421, chart_y + 28, id(font_small), black, "+10%");
-          it.print(430, chart_y + 55, id(font_small), black, "0%");
-          it.print(415, chart_y + 82, id(font_small), black, "-10%");
-          const int chart_pts[] = {55, 60, 62, 70, 62, 58, 49, 57, 55, 61, 49, 42, 47, 38, 38, 30, 39, 47, 32, 24, 22, 28, 18, 14, 7, 12, 6, 2};
-          int last_x = chart_x + 4;
-          int last_y = chart_y + chart_pts[0];
-          for (int i = 1; i < 28; i++) {
-            int x = chart_x + 4 + i * (chart_w - 8) / 27;
-            int y = chart_y + chart_pts[i];
-            line_t(last_x, last_y, x, y, black, 2);
-            last_x = x;
-            last_y = y;
-          }
-          it.print(chart_x + 14, chart_y + 88, id(font_tiny), black, "7 cze");
-          it.print(chart_x + 132, chart_y + 88, id(font_tiny), black, "14 cze");
-          it.print(chart_x + 240, chart_y + 88, id(font_tiny), black, "21 cze");
-          it.print(chart_x + 348, chart_y + 88, id(font_tiny), black, "28 cze");
-          it.print(chart_x + 435, chart_y + 88, id(font_tiny), black, "5 lip");
-
-          int table_y = 303;
-          line_t(402, table_y, 933, table_y, black, 1);
-          it.print(420, table_y + 9, id(font_small_bold), black, "INSTRUMENT");
-          it.print(725, table_y + 9, id(font_small_bold), black, TextAlign::TOP_CENTER, "DZIENNA ZMIANA %");
-          it.print(880, table_y + 9, id(font_small_bold), black, TextAlign::TOP_CENTER, "ZYSK");
-          line_t(402, table_y + 33, 933, table_y + 33, black, 1);
-          const char *fallback_names[] = {"NVDA", "KGHM", "NEWAG", "ETF S&P500", "Alphabet"};
-          float fallback_daily[] = {2.45f, -0.82f, 1.15f, 0.35f, -1.10f};
-          float fallback_profit[] = {6240.0f, -1230.0f, 980.0f, 4560.0f, -1120.0f};
           std::string positions = id(xtb_positions).state;
-          for (int i = 0; i < 5; i++) {
-            int y = table_y + 34 + i * 28;
-            line_t(402, y + 28, 933, y + 28, line_gray, 1);
-            std::string obj = nth_object(positions, i);
-            std::string name = field_text(obj, "display_name", fallback_names[i]);
-            if (name == fallback_names[i]) name = field_text(obj, "name", fallback_names[i]);
-            if (name == fallback_names[i]) name = field_text(obj, "symbol", fallback_names[i]);
-            float daily = number_after(obj, "daily_change_percent", fallback_daily[i]);
-            float pos_profit = number_after(obj, "profit_loss", fallback_profit[i]);
-            if (isnan(pos_profit)) pos_profit = number_after(obj, "profit_net", fallback_profit[i]);
-            it.rectangle(421, y + 7, 16, 16, black);
-            it.print(429, y + 8, id(font_micro), black, TextAlign::TOP_CENTER, i == 3 ? "SP" : truncate(name, 1).c_str());
-            it.print(452, y + 8, id(font_body), black, truncate(name, 13).c_str());
-            draw_spark(548, y + 8, 84, 15, i);
-            it.print(725, y + 8, id(font_body_bold), black, TextAlign::TOP_CENTER, signed_decimal(daily, 2, "%").c_str());
-            it.print(880, y + 8, id(font_body_bold), black, TextAlign::TOP_CENTER, money(pos_profit, currency, true).c_str());
+          int visible = 0;
+          for (int i = 0; i < 10; i++) {
+            std::string item = nth_object(positions, i);
+            if (item.empty()) {
+              lv_obj_add_flag(rows[i], LV_OBJ_FLAG_HIDDEN);
+              continue;
+            }
+            std::string name = text_from(item, "display_name");
+            if (name.empty()) name = text_from(item, "name");
+            if (name.empty()) name = text_from(item, "symbol");
+            if (name.empty()) name = "Pozycja";
+            name = compact_spaces(name);
+            set_label(names[i], name);
+            float daily_change = number_from(item, "daily_change_percent", NAN);
+            float row_profit = number_from(item, "profit_loss", NAN);
+            if (isnan(row_profit)) row_profit = number_from(item, "profit_net", NAN);
+            set_label(daily[i], percent(daily_change));
+            set_label(profits[i], money(row_profit, currency));
+            lv_obj_clear_flag(rows[i], LV_OBJ_FLAG_HIDDEN);
+            visible++;
           }
+
+          if (visible == 0) {
+            set_label(id(position_name_0), "Brak danych z XTB");
+            set_label(id(position_daily_0), "");
+            set_label(id(position_profit_0), "");
+            lv_obj_clear_flag(id(position_row_0), LV_OBJ_FLAG_HIDDEN);
+            for (int i = 1; i < 10; i++) lv_obj_add_flag(rows[i], LV_OBJ_FLAG_HIDDEN);
+          }
+
+          static bool first_render = true;
+          if (first_render) {
+            lv_obj_invalidate(lv_scr_act());
+            first_render = false;
+          }
+      - component.update: desk_lvgl
+
+esphome:
+  on_boot:
+    priority: -100
+    then:
+      - delay: 4s
+      - script.execute: refresh_dashboard
+      - delay: 500ms
+      - component.update: desk_lvgl
+      - delay: 500ms
+      - component.update: epaper_display
+
+interval:
+  - interval: 30s
+    then:
+      - script.execute: refresh_dashboard

@@ -150,7 +150,7 @@ bool T547::find_dirty_area_(Rect_t *area) {
     return false;
   }
 
-  constexpr int margin = 8;
+  constexpr int margin = 24;
   int x = std::max(0, min_byte * 2 - margin);
   int right = std::min(width, (max_byte + 1) * 2 + margin);
   int y = std::max(0, min_y - margin);

@@ -20,24 +20,27 @@ sources are vendored from
 so the ESPHome build does not depend on PlatformIO library discovery.
 
 I reviewed [jtenniswood/espcontrol](https://github.com/jtenniswood/espcontrol)
-as a strong Home Assistant control-panel reference. For this e-paper build,
-the first version stays closer to native ESPHome display pages because e-paper
-needs slower, deliberate refreshes rather than a continuously animated GUI.
+as a strong Home Assistant control-panel reference. The dashboard is implemented
+with ESPHome LVGL so the touchscreen can drive native widgets, including a
+finger-scrollable investment list, while the custom e-paper driver still keeps
+updates partial and deliberate.
 
 ## Features
 
 - 960x540 ED047TC1 e-paper display through the external `t547` ESPHome component.
-- Grayscale rendering enabled for weather, charts and dashboard typography.
-- Single landscape dashboard matching the desk-panel mockup: weather, home
-  climate, fan control, and investments.
+- LVGL-based single landscape dashboard matching the desk-panel mockup: weather,
+  home climate, fan control, and investments.
+- Material Design Icons rendered from a vendored icon font.
+- Finger-scrollable investment list backed by the XTB entity `positions`
+  attribute.
 - Home Assistant imported sensors/text sensors for Tomorrow.io weather, local
   room conditions, fan state, and XTB balance attributes.
-- Touch control for the Home Assistant fan entity.
+- LVGL touch buttons for the Home Assistant fan entity.
 - Battery voltage and percentage from the board ADC on GPIO14.
 - ESP32 internal temperature, WiFi RSSI, uptime and network details.
 - GT911 touchscreen bus configured on GPIO18/GPIO17 with interrupt on GPIO47.
 - Physical button on GPIO21 for manual display refresh.
-- Home Assistant buttons for next page, refresh, restart and safe mode.
+- Home Assistant buttons for dashboard refresh, display refresh, restart and safe mode.
 - Bluetooth proxy package enabled by the default `lilygo-t5-deskhub.yaml`.
 - `lilygo-t5-deskhub-lite.yaml` without Bluetooth for Windows builds and first bring-up.
 - Optional web server/captive portal package for browser diagnostics when the firmware budget allows it.
@@ -104,7 +107,9 @@ Validated locally with ESPHome `2026.6.0-dev` from `kyvaith/esphome`.
 
 ## Pages And Entities
 
-The dashboard page is defined in `packages/display_pages.yaml`.
+The dashboard page is defined in `packages/display_pages.yaml` as an LVGL page.
+The investment positions panel is a native LVGL scrollable object, so it should
+scroll with a finger on the GT911 touchscreen.
 
 Home Assistant entities are defined in `packages/ha_entities.yaml`. The top-level
 `lilygo-t5-deskhub.yaml` file provides substitutions for the default entity IDs,
@@ -118,12 +123,17 @@ substitutions:
   entity_xtb_balance: sensor.xtb_53578037_saldo
 ```
 
-More examples are in [docs/ADDING_PAGES.md](docs/ADDING_PAGES.md).
+The current investment panel intentionally avoids fake historical charts. The
+XTB Home Assistant entity exposes current `summary`, `positions`, and currency
+attributes, but not a real time series. If the XTB integration later exposes
+history, the LVGL page can add a real chart widget fed from that data.
 
 ## Refresh Strategy
 
 The local `t547` component keeps a previous grayscale framebuffer in PSRAM,
-detects the dirty rectangle, and updates only that area when possible. A full
+detects the dirty rectangle, and updates only that area when possible. LVGL is
+configured with 16 px draw rounding and calls the e-paper update after completed
+draws; the driver expands dirty areas before sending them to the panel. A full
 grayscale refresh is still forced periodically with `full_update_every` to fight
 ghosting.
 
@@ -136,7 +146,8 @@ instead of switching the whole panel to a 1-bit animation path.
 - Bluetooth proxy is enabled, but ESPHome warns that memory can become tight on
   some boards. Use `lilygo-t5-deskhub-lite.yaml` for first bring-up or Windows
   builds that hit the command-line limit.
-- The display is set to `rotation: 0` for the landscape mockup orientation. Change
-  it to `0`, `180`, or `270` if your case/stand is different.
+- The display is drawn in the board's landscape orientation. Do not add
+  `display.rotation` when LVGL is enabled; use LVGL transform settings if a
+  physical enclosure needs another orientation.
 - The XTB card model is read from the balance entity attributes: `summary`,
   `positions`, and `unit_of_measurement`.

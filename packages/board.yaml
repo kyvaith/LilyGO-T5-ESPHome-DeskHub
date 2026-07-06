@@ -18,6 +18,7 @@ esphome:
       - "-DBOARD_HAS_PSRAM"
       - "-DARDUINO_USB_MODE=1"
       - "-DARDUINO_USB_CDC_ON_BOOT=1"
+      - "-DLV_DRAW_SW_CIRCLE_CACHE_SIZE=4"
 
 esp32:
   variant: esp32s3
