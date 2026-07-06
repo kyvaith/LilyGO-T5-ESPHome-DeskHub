@@ -133,9 +133,10 @@ history, the LVGL page can add a real chart widget fed from that data.
 The local `t547` component keeps a previous grayscale framebuffer in PSRAM,
 detects the dirty rectangle, and updates only that area when possible. LVGL is
 configured with 16 px draw rounding and calls the e-paper update after completed
-draws; the driver expands dirty areas before sending them to the panel. A full
-grayscale refresh is still forced periodically with `full_update_every` to fight
-ghosting.
+draws; the driver expands dirty areas before sending them to the panel. The
+desk dashboard sets `full_update_every: 0`, which disables scheduled full-screen
+flashing after boot. Repeated refreshes also avoid resetting unchanged labels
+and fan styles so identical Home Assistant data does not redraw the panel.
 
 This is inspired by the Paperboy fast-refresh idea, but kept in ESPHome's
 normal display pipeline so the dashboard can preserve 16-level grayscale

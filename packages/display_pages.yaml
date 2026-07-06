@@ -1,17 +1,17 @@
 font:
   - file: "gfonts://Inter"
     id: font_micro
-    size: 10
+    size: 12
     glyphs: &ui_glyphs " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[]_abcdefghijklmnopqrstuvwxyz{}|~ąćęłńóśźżĄĆĘŁŃÓŚŹŻ°±"
 
   - file: "gfonts://Inter"
     id: font_tiny
-    size: 12
+    size: 14
     glyphs: *ui_glyphs
 
   - file: "gfonts://Inter"
     id: font_small
-    size: 14
+    size: 16
     glyphs: *ui_glyphs
 
   - file:
@@ -19,12 +19,12 @@ font:
       family: Inter
       weight: bold
     id: font_small_bold
-    size: 14
+    size: 16
     glyphs: *ui_glyphs
 
   - file: "gfonts://Inter"
     id: font_body
-    size: 16
+    size: 18
     glyphs: *ui_glyphs
 
   - file:
@@ -32,7 +32,7 @@ font:
       family: Inter
       weight: bold
     id: font_body_bold
-    size: 16
+    size: 18
     glyphs: *ui_glyphs
 
   - file:
@@ -40,7 +40,7 @@ font:
       family: Inter
       weight: bold
     id: font_section
-    size: 18
+    size: 20
     glyphs: *ui_glyphs
 
   - file:
@@ -48,7 +48,7 @@ font:
       family: Inter
       weight: bold
     id: font_value
-    size: 26
+    size: 30
     glyphs: *ui_glyphs
 
   - file:
@@ -56,7 +56,7 @@ font:
       family: Inter
       weight: bold
     id: font_temp
-    size: 50
+    size: 56
     glyphs: *ui_glyphs
 
   - file:
@@ -64,12 +64,12 @@ font:
       family: Inter
       weight: bold
     id: font_time
-    size: 34
+    size: 40
     glyphs: *ui_glyphs
 
   - file: "fonts/materialdesignicons-webfont.ttf"
     id: font_mdi_18
-    size: 18
+    size: 22
     glyphs: &mdi_glyphs
       - "\U000F00ED" # calendar
       - "\U000F012A" # chart-line
@@ -87,17 +87,17 @@ font:
 
   - file: "fonts/materialdesignicons-webfont.ttf"
     id: font_mdi_26
-    size: 26
+    size: 30
     glyphs: *mdi_glyphs
 
   - file: "fonts/materialdesignicons-webfont.ttf"
     id: font_mdi_42
-    size: 42
+    size: 48
     glyphs: *mdi_glyphs
 
   - file: "fonts/materialdesignicons-webfont.ttf"
     id: font_mdi_64
-    size: 64
+    size: 72
     glyphs: *mdi_glyphs
 
 image:
@@ -128,9 +128,9 @@ display:
     id: epaper_display
     greyscale: true
     fast_refresh: true
-    full_update_every: 18
-    partial_threshold_percent: 72
-    partial_clear_cycles: 2
+    full_update_every: 0
+    partial_threshold_percent: 100
+    partial_clear_cycles: 0
     update_interval: never
     auto_clear_enabled: false
 
@@ -151,7 +151,7 @@ lvgl:
   text_color: 0x000000
   on_draw_end:
     - logger.log:
-        level: INFO
+        level: DEBUG
         format: "LVGL draw ended; updating e-paper"
     - component.update: epaper_display
   pages:
@@ -164,7 +164,7 @@ lvgl:
             id: header_rule
             x: 24
             y: 46
-            width: 712
+            width: 660
             height: 1
             bg_color: 0x000000
             bg_opa: cover
@@ -173,20 +173,20 @@ lvgl:
 
         - label:
             id: header_date
-            x: 742
-            y: 24
-            width: 78
-            height: 20
+            x: 704
+            y: 15
+            width: 92
+            height: 24
             text: "Pn, 6 lip"
             text_font: font_small
             text_align: right
 
         - obj:
             id: header_time_divider
-            x: 832
-            y: 17
-            width: 1
-            height: 31
+            x: 812
+            y: 10
+            width: 2
+            height: 34
             bg_color: 0x000000
             bg_opa: cover
             border_width: 0
@@ -194,10 +194,10 @@ lvgl:
 
         - label:
             id: header_time
-            x: 848
-            y: 8
-            width: 86
-            height: 40
+            x: 828
+            y: 0
+            width: 108
+            height: 46
             text: "--:--"
             text_font: font_time
             text_align: right
@@ -213,15 +213,15 @@ lvgl:
 
         - obj:
             id: weather_card
-            x: 24
-            y: 56
-            width: 365
-            height: 200
+            x: 22
+            y: 58
+            width: 386
+            height: 218
             bg_color: 0xFFFFFF
             bg_opa: cover
             border_color: 0x000000
-            border_width: 1
-            radius: 6
+            border_width: 2
+            radius: 7
             pad_all: 0
             scrollable: false
             scrollbar_mode: "off"
@@ -229,8 +229,8 @@ lvgl:
               - label:
                   x: 18
                   y: 18
-                  width: 26
-                  height: 26
+                  width: 32
+                  height: 32
                   text: "\U000F0595"
                   text_font: font_mdi_26
 
@@ -245,37 +245,37 @@ lvgl:
               - label:
                   id: weather_main_icon
                   x: 42
-                  y: 53
-                  width: 78
-                  height: 74
+                  y: 56
+                  width: 92
+                  height: 84
                   text: "\U000F0595"
                   text_font: font_mdi_64
 
               - label:
                   id: weather_temp_value
-                  x: 160
-                  y: 48
-                  width: 180
-                  height: 58
+                  x: 178
+                  y: 52
+                  width: 185
+                  height: 68
                   text: "--°C"
                   text_font: font_temp
                   long_mode: CLIP
 
               - label:
                   id: weather_condition_value
-                  x: 164
-                  y: 111
-                  width: 165
-                  height: 40
+                  x: 182
+                  y: 112
+                  width: 185
+                  height: 44
                   text: "Brak danych"
                   text_font: font_body
-                  long_mode: DOT
+                  long_mode: WRAP
 
               - obj:
                   x: 18
-                  y: 142
-                  width: 329
-                  height: 1
+                  y: 158
+                  width: 350
+                  height: 2
                   bg_color: 0x000000
                   bg_opa: cover
                   border_width: 0
@@ -283,29 +283,29 @@ lvgl:
 
               - label:
                   id: forecast_day_0
-                  x: 20
-                  y: 149
-                  width: 77
-                  height: 16
+                  x: 18
+                  y: 166
+                  width: 87
+                  height: 18
                   text: "Dziś"
                   text_font: font_tiny
                   text_align: center
 
               - label:
                   id: forecast_icon_0
-                  x: 43
-                  y: 164
-                  width: 30
-                  height: 27
+                  x: 46
+                  y: 181
+                  width: 34
+                  height: 31
                   text: "\U000F0590"
                   text_font: font_mdi_26
                   text_align: center
 
               - label:
                   id: forecast_temp_0
-                  x: 15
-                  y: 184
-                  width: 87
+                  x: 16
+                  y: 200
+                  width: 90
                   height: 14
                   text: "--°C / --°C"
                   text_font: font_micro
@@ -313,10 +313,10 @@ lvgl:
                   long_mode: CLIP
 
               - obj:
-                  x: 104
-                  y: 151
+                  x: 106
+                  y: 166
                   width: 1
-                  height: 40
+                  height: 42
                   bg_color: 0xB8B8B8
                   bg_opa: cover
                   border_width: 0
@@ -324,29 +324,29 @@ lvgl:
 
               - label:
                   id: forecast_day_1
-                  x: 108
-                  y: 149
-                  width: 77
-                  height: 16
+                  x: 110
+                  y: 166
+                  width: 87
+                  height: 18
                   text: "Jutro"
                   text_font: font_tiny
                   text_align: center
 
               - label:
                   id: forecast_icon_1
-                  x: 131
-                  y: 164
-                  width: 30
-                  height: 27
+                  x: 138
+                  y: 181
+                  width: 34
+                  height: 31
                   text: "\U000F0590"
                   text_font: font_mdi_26
                   text_align: center
 
               - label:
                   id: forecast_temp_1
-                  x: 103
-                  y: 184
-                  width: 87
+                  x: 108
+                  y: 200
+                  width: 90
                   height: 14
                   text: "--°C / --°C"
                   text_font: font_micro
@@ -354,10 +354,10 @@ lvgl:
                   long_mode: CLIP
 
               - obj:
-                  x: 192
-                  y: 151
+                  x: 198
+                  y: 166
                   width: 1
-                  height: 40
+                  height: 42
                   bg_color: 0xB8B8B8
                   bg_opa: cover
                   border_width: 0
@@ -365,29 +365,29 @@ lvgl:
 
               - label:
                   id: forecast_day_2
-                  x: 196
-                  y: 149
-                  width: 77
-                  height: 16
+                  x: 202
+                  y: 166
+                  width: 87
+                  height: 18
                   text: "Poj."
                   text_font: font_tiny
                   text_align: center
 
               - label:
                   id: forecast_icon_2
-                  x: 219
-                  y: 164
-                  width: 30
-                  height: 27
+                  x: 230
+                  y: 181
+                  width: 34
+                  height: 31
                   text: "\U000F0590"
                   text_font: font_mdi_26
                   text_align: center
 
               - label:
                   id: forecast_temp_2
-                  x: 191
-                  y: 184
-                  width: 87
+                  x: 200
+                  y: 200
+                  width: 90
                   height: 14
                   text: "--°C / --°C"
                   text_font: font_micro
@@ -395,10 +395,10 @@ lvgl:
                   long_mode: CLIP
 
               - obj:
-                  x: 280
-                  y: 151
+                  x: 290
+                  y: 166
                   width: 1
-                  height: 40
+                  height: 42
                   bg_color: 0xB8B8B8
                   bg_opa: cover
                   border_width: 0
@@ -406,29 +406,29 @@ lvgl:
 
               - label:
                   id: forecast_day_3
-                  x: 284
-                  y: 149
-                  width: 77
-                  height: 16
+                  x: 294
+                  y: 166
+                  width: 87
+                  height: 18
                   text: "Późn."
                   text_font: font_tiny
                   text_align: center
 
               - label:
                   id: forecast_icon_3
-                  x: 307
-                  y: 164
-                  width: 30
-                  height: 27
+                  x: 322
+                  y: 181
+                  width: 34
+                  height: 31
                   text: "\U000F0590"
                   text_font: font_mdi_26
                   text_align: center
 
               - label:
                   id: forecast_temp_3
-                  x: 279
-                  y: 184
-                  width: 87
+                  x: 292
+                  y: 200
+                  width: 90
                   height: 14
                   text: "--°C / --°C"
                   text_font: font_micro
@@ -437,15 +437,15 @@ lvgl:
 
         - obj:
             id: home_card
-            x: 24
-            y: 270
-            width: 365
-            height: 214
+            x: 22
+            y: 292
+            width: 386
+            height: 222
             bg_color: 0xFFFFFF
             bg_opa: cover
             border_color: 0x000000
-            border_width: 1
-            radius: 6
+            border_width: 2
+            radius: 7
             pad_all: 0
             scrollable: false
             scrollbar_mode: "off"
@@ -453,8 +453,8 @@ lvgl:
               - label:
                   x: 18
                   y: 18
-                  width: 26
-                  height: 26
+                  width: 32
+                  height: 32
                   text: "\U000F06A1"
                   text_font: font_mdi_26
 
@@ -467,72 +467,72 @@ lvgl:
                   text_font: font_section
 
               - label:
-                  x: 26
-                  y: 72
-                  width: 36
-                  height: 44
+                  x: 28
+                  y: 75
+                  width: 44
+                  height: 50
                   text: "\U000F050F"
                   text_font: font_mdi_42
 
               - label:
-                  x: 77
-                  y: 68
-                  width: 130
-                  height: 20
+                  x: 86
+                  y: 70
+                  width: 132
+                  height: 22
                   text: "TEMPERATURA"
                   text_font: font_small_bold
 
               - label:
                   id: indoor_temp_value
-                  x: 76
-                  y: 89
-                  width: 130
-                  height: 40
+                  x: 86
+                  y: 94
+                  width: 132
+                  height: 44
                   text: "--°C"
                   text_font: font_value
                   long_mode: CLIP
 
               - obj:
-                  x: 198
-                  y: 66
+                  x: 211
+                  y: 70
                   width: 1
-                  height: 67
+                  height: 72
                   bg_color: 0xB8B8B8
                   bg_opa: cover
                   border_width: 0
                   pad_all: 0
 
               - label:
-                  x: 223
-                  y: 73
-                  width: 38
-                  height: 40
+                  x: 230
+                  y: 77
+                  width: 46
+                  height: 50
                   text: "\U000F058E"
                   text_font: font_mdi_42
 
               - label:
-                  x: 274
-                  y: 68
-                  width: 82
-                  height: 20
+                  x: 276
+                  y: 70
+                  width: 104
+                  height: 22
                   text: "WILGOTNOŚĆ"
                   text_font: font_small_bold
 
               - label:
                   id: indoor_humidity_value
-                  x: 274
-                  y: 89
-                  width: 78
-                  height: 40
+                  x: 276
+                  y: 94
+                  width: 98
+                  height: 44
                   text: "--%"
                   text_font: font_value
                   long_mode: CLIP
 
               - obj:
                   x: 18
-                  y: 144
-                  width: 329
-                  height: 1
+                  y: 154
+                  width: 350
+                  height: 2
                   bg_color: 0x000000
                   bg_opa: cover
                   border_width: 0
@@ -540,27 +540,27 @@ lvgl:
 
               - label:
                   x: 31
-                  y: 160
-                  width: 34
-                  height: 34
+                  y: 169
+                  width: 42
+                  height: 42
                   text: "\U000F0210"
                   text_font: font_mdi_42
 
               - label:
-                  x: 78
-                  y: 164
-                  width: 120
+                  x: 86
+                  y: 176
+                  width: 128
                   height: 24
                   text: "WENTYLATOR"
                   text_font: font_body_bold
 
               - button:
                   id: fan_on_btn
-                  x: 205
-                  y: 158
-                  width: 66
-                  height: 34
-                  radius: 17
+                  x: 226
+                  y: 169
+                  width: 64
+                  height: 36
+                  radius: 18
                   bg_color: 0xFFFFFF
                   border_color: 0x000000
                   border_width: 1
@@ -579,20 +579,20 @@ lvgl:
                     - label:
                         id: fan_on_label
                         x: 0
-                        y: 6
-                        width: 66
-                        height: 20
+                        y: 7
+                        width: 64
+                        height: 22
                         text: "ON"
                         text_font: font_body_bold
                         text_align: center
 
               - button:
                   id: fan_off_btn
-                  x: 273
-                  y: 158
-                  width: 66
-                  height: 34
-                  radius: 17
+                  x: 294
+                  y: 169
+                  width: 64
+                  height: 36
+                  radius: 18
                   bg_color: 0x000000
                   border_color: 0x000000
                   border_width: 1
@@ -611,9 +611,9 @@ lvgl:
                     - label:
                         id: fan_off_label
                         x: 0
-                        y: 6
-                        width: 66
-                        height: 20
+                        y: 7
+                        width: 64
+                        height: 22
                         text: "OFF"
                         text_font: font_body_bold
                         text_color: 0xFFFFFF
@@ -621,15 +621,15 @@ lvgl:
 
         - obj:
             id: investments_card
-            x: 405
-            y: 56
-            width: 531
-            height: 428
+            x: 424
+            y: 58
+            width: 514
+            height: 456
             bg_color: 0xFFFFFF
             bg_opa: cover
             border_color: 0x000000
-            border_width: 1
-            radius: 6
+            border_width: 2
+            radius: 7
             pad_all: 0
             scrollable: false
             scrollbar_mode: "off"
@@ -637,8 +637,8 @@ lvgl:
               - label:
                   x: 18
                   y: 18
-                  width: 28
-                  height: 28
+                  width: 32
+                  height: 32
                   text: "\U000F081F"
                   text_font: font_mdi_26
 
@@ -651,9 +651,9 @@ lvgl:
                   text_font: font_section
 
               - label:
-                  x: 32
-                  y: 58
-                  width: 138
+                  x: 20
+                  y: 60
+                  width: 150
                   height: 18
                   text: "SALDO"
                   text_font: font_tiny
@@ -661,28 +661,28 @@ lvgl:
 
               - label:
                   id: xtb_balance_value
-                  x: 12
-                  y: 78
-                  width: 176
-                  height: 34
+                  x: 8
+                  y: 82
+                  width: 168
+                  height: 38
                   text: "-- PLN"
                   text_font: font_value
                   text_align: center
                   long_mode: DOT
 
               - obj:
-                  x: 186
+                  x: 176
                   y: 62
                   width: 1
-                  height: 52
+                  height: 58
                   bg_color: 0xB8B8B8
                   bg_opa: cover
                   border_width: 0
                   pad_all: 0
 
               - label:
-                  x: 198
-                  y: 58
+                  x: 184
+                  y: 60
                   width: 150
                   height: 18
                   text: "ZYSK"
@@ -691,29 +691,29 @@ lvgl:
 
               - label:
                   id: xtb_profit_value
-                  x: 194
-                  y: 78
-                  width: 158
-                  height: 34
+                  x: 178
+                  y: 82
+                  width: 164
+                  height: 38
                   text: "-- PLN"
                   text_font: font_value
                   text_align: center
                   long_mode: DOT
 
               - obj:
-                  x: 352
+                  x: 342
                   y: 62
                   width: 1
-                  height: 52
+                  height: 58
                   bg_color: 0xB8B8B8
                   bg_opa: cover
                   border_width: 0
                   pad_all: 0
 
               - label:
-                  x: 366
-                  y: 58
-                  width: 150
+                  x: 354
+                  y: 60
+                  width: 140
                   height: 18
                   text: "ZYSK %"
                   text_font: font_tiny
@@ -721,10 +721,10 @@ lvgl:
 
               - label:
                   id: xtb_profit_percent_value
-                  x: 366
-                  y: 78
+                  x: 350
+                  y: 82
                   width: 150
-                  height: 34
+                  height: 38
                   text: "--%"
                   text_font: font_value
                   text_align: center
@@ -732,36 +732,36 @@ lvgl:
 
               - obj:
                   x: 12
-                  y: 125
-                  width: 507
-                  height: 1
+                  y: 138
+                  width: 490
+                  height: 2
                   bg_color: 0x000000
                   bg_opa: cover
                   border_width: 0
                   pad_all: 0
 
               - label:
-                  x: 16
-                  y: 136
-                  width: 180
-                  height: 20
+                  x: 14
+                  y: 150
+                  width: 190
+                  height: 22
                   text: "INSTRUMENT"
                   text_font: font_small_bold
 
               - label:
-                  x: 257
-                  y: 136
-                  width: 118
-                  height: 20
+                  x: 286
+                  y: 150
+                  width: 86
+                  height: 22
                   text: "DZIENNA %"
                   text_font: font_small_bold
                   text_align: right
 
               - label:
-                  x: 396
-                  y: 136
-                  width: 112
-                  height: 20
+                  x: 388
+                  y: 150
+                  width: 104
+                  height: 22
                   text: "ZYSK"
                   text_font: font_small_bold
                   text_align: right
@@ -769,9 +769,9 @@ lvgl:
               - obj:
                   id: positions_list
                   x: 12
-                  y: 160
-                  width: 507
-                  height: 254
+                  y: 178
+                  width: 490
+                  height: 260
                   bg_opa: transp
                   border_width: 0
                   pad_all: 0
@@ -783,8 +783,8 @@ lvgl:
                         id: position_row_0
                         x: 0
                         y: 0
-                        width: 500
-                        height: 30
+                        width: 486
+                        height: 36
                         bg_opa: transp
                         border_width: 0
                         pad_all: 0
@@ -793,34 +793,34 @@ lvgl:
                           - label:
                               id: position_name_0
                               x: 0
-                              y: 6
-                              width: 250
-                              height: 20
+                              y: 7
+                              width: 260
+                              height: 24
                               text: "Brak danych z XTB"
                               text_font: font_small
                               long_mode: DOT
                           - label:
                               id: position_daily_0
-                              x: 270
-                              y: 6
-                              width: 105
-                              height: 20
+                              x: 286
+                              y: 7
+                              width: 86
+                              height: 24
                               text: "--%"
                               text_font: font_small
                               text_align: right
                           - label:
                               id: position_profit_0
-                              x: 390
-                              y: 6
-                              width: 108
-                              height: 20
+                              x: 386
+                              y: 7
+                              width: 100
+                              height: 24
                               text: "-- PLN"
                               text_font: font_small
                               text_align: right
                           - obj:
                               x: 0
-                              y: 29
-                              width: 500
+                              y: 35
+                              width: 486
                               height: 1
                               bg_color: 0xB8B8B8
                               bg_opa: cover
@@ -830,9 +830,9 @@ lvgl:
                     - obj:
                         id: position_row_1
                         x: 0
-                        y: 30
-                        width: 500
-                        height: 30
+                        y: 36
+                        width: 486
+                        height: 36
                         bg_opa: transp
                         border_width: 0
                         pad_all: 0
@@ -841,34 +841,34 @@ lvgl:
                           - label:
                               id: position_name_1
                               x: 0
-                              y: 6
-                              width: 250
-                              height: 20
+                              y: 7
+                              width: 260
+                              height: 24
                               text: ""
                               text_font: font_small
                               long_mode: DOT
                           - label:
                               id: position_daily_1
-                              x: 270
-                              y: 6
-                              width: 105
-                              height: 20
+                              x: 286
+                              y: 7
+                              width: 86
+                              height: 24
                               text: ""
                               text_font: font_small
                               text_align: right
                           - label:
                               id: position_profit_1
-                              x: 390
-                              y: 6
-                              width: 108
-                              height: 20
+                              x: 386
+                              y: 7
+                              width: 100
+                              height: 24
                               text: ""
                               text_font: font_small
                               text_align: right
                           - obj:
                               x: 0
-                              y: 29
-                              width: 500
+                              y: 35
+                              width: 486
                               height: 1
                               bg_color: 0xB8B8B8
                               bg_opa: cover
@@ -878,9 +878,9 @@ lvgl:
                     - obj:
                         id: position_row_2
                         x: 0
-                        y: 60
-                        width: 500
-                        height: 30
+                        y: 72
+                        width: 486
+                        height: 36
                         bg_opa: transp
                         border_width: 0
                         pad_all: 0
@@ -889,34 +889,34 @@ lvgl:
                           - label:
                               id: position_name_2
                               x: 0
-                              y: 6
-                              width: 250
-                              height: 20
+                              y: 7
+                              width: 260
+                              height: 24
                               text: ""
                               text_font: font_small
                               long_mode: DOT
                           - label:
                               id: position_daily_2
-                              x: 270
-                              y: 6
-                              width: 105
-                              height: 20
+                              x: 286
+                              y: 7
+                              width: 86
+                              height: 24
                               text: ""
                               text_font: font_small
                               text_align: right
                           - label:
                               id: position_profit_2
-                              x: 390
-                              y: 6
-                              width: 108
-                              height: 20
+                              x: 386
+                              y: 7
+                              width: 100
+                              height: 24
                               text: ""
                               text_font: font_small
                               text_align: right
                           - obj:
                               x: 0
-                              y: 29
-                              width: 500
+                              y: 35
+                              width: 486
                               height: 1
                               bg_color: 0xB8B8B8
                               bg_opa: cover
@@ -926,9 +926,9 @@ lvgl:
                     - obj:
                         id: position_row_3
                         x: 0
-                        y: 90
-                        width: 500
-                        height: 30
+                        y: 108
+                        width: 486
+                        height: 36
                         bg_opa: transp
                         border_width: 0
                         pad_all: 0
@@ -937,34 +937,34 @@ lvgl:
                           - label:
                               id: position_name_3
                               x: 0
-                              y: 6
-                              width: 250
-                              height: 20
+                              y: 7
+                              width: 260
+                              height: 24
                               text: ""
                               text_font: font_small
                               long_mode: DOT
                           - label:
                               id: position_daily_3
-                              x: 270
-                              y: 6
-                              width: 105
-                              height: 20
+                              x: 286
+                              y: 7
+                              width: 86
+                              height: 24
                               text: ""
                               text_font: font_small
                               text_align: right
                           - label:
                               id: position_profit_3
-                              x: 390
-                              y: 6
-                              width: 108
-                              height: 20
+                              x: 386
+                              y: 7
+                              width: 100
+                              height: 24
                               text: ""
                               text_font: font_small
                               text_align: right
                           - obj:
                               x: 0
-                              y: 29
-                              width: 500
+                              y: 35
+                              width: 486
                               height: 1
                               bg_color: 0xB8B8B8
                               bg_opa: cover
@@ -974,9 +974,9 @@ lvgl:
                     - obj:
                         id: position_row_4
                         x: 0
-                        y: 120
-                        width: 500
-                        height: 30
+                        y: 144
+                        width: 486
+                        height: 36
                         bg_opa: transp
                         border_width: 0
                         pad_all: 0
@@ -985,34 +985,34 @@ lvgl:
                           - label:
                               id: position_name_4
                               x: 0
-                              y: 6
-                              width: 250
-                              height: 20
+                              y: 7
+                              width: 260
+                              height: 24
                               text: ""
                               text_font: font_small
                               long_mode: DOT
                           - label:
                               id: position_daily_4
-                              x: 270
-                              y: 6
-                              width: 105
-                              height: 20
+                              x: 286
+                              y: 7
+                              width: 86
+                              height: 24
                               text: ""
                               text_font: font_small
                               text_align: right
                           - label:
                               id: position_profit_4
-                              x: 390
-                              y: 6
-                              width: 108
-                              height: 20
+                              x: 386
+                              y: 7
+                              width: 100
+                              height: 24
                               text: ""
                               text_font: font_small
                               text_align: right
                           - obj:
                               x: 0
-                              y: 29
-                              width: 500
+                              y: 35
+                              width: 486
                               height: 1
                               bg_color: 0xB8B8B8
                               bg_opa: cover
@@ -1022,9 +1022,9 @@ lvgl:
                     - obj:
                         id: position_row_5
                         x: 0
-                        y: 150
-                        width: 500
-                        height: 30
+                        y: 180
+                        width: 486
+                        height: 36
                         bg_opa: transp
                         border_width: 0
                         pad_all: 0
@@ -1033,34 +1033,34 @@ lvgl:
                           - label:
                               id: position_name_5
                               x: 0
-                              y: 6
-                              width: 250
-                              height: 20
+                              y: 7
+                              width: 260
+                              height: 24
                               text: ""
                               text_font: font_small
                               long_mode: DOT
                           - label:
                               id: position_daily_5
-                              x: 270
-                              y: 6
-                              width: 105
-                              height: 20
+                              x: 286
+                              y: 7
+                              width: 86
+                              height: 24
                               text: ""
                               text_font: font_small
                               text_align: right
                           - label:
                               id: position_profit_5
-                              x: 390
-                              y: 6
-                              width: 108
-                              height: 20
+                              x: 386
+                              y: 7
+                              width: 100
+                              height: 24
                               text: ""
                               text_font: font_small
                               text_align: right
                           - obj:
                               x: 0
-                              y: 29
-                              width: 500
+                              y: 35
+                              width: 486
                               height: 1
                               bg_color: 0xB8B8B8
                               bg_opa: cover
@@ -1070,9 +1070,9 @@ lvgl:
                     - obj:
                         id: position_row_6
                         x: 0
-                        y: 180
-                        width: 500
-                        height: 30
+                        y: 216
+                        width: 486
+                        height: 36
                         bg_opa: transp
                         border_width: 0
                         pad_all: 0
@@ -1081,34 +1081,34 @@ lvgl:
                           - label:
                               id: position_name_6
                               x: 0
-                              y: 6
-                              width: 250
-                              height: 20
+                              y: 7
+                              width: 260
+                              height: 24
                               text: ""
                               text_font: font_small
                               long_mode: DOT
                           - label:
                               id: position_daily_6
-                              x: 270
-                              y: 6
-                              width: 105
-                              height: 20
+                              x: 286
+                              y: 7
+                              width: 86
+                              height: 24
                               text: ""
                               text_font: font_small
                               text_align: right
                           - label:
                               id: position_profit_6
-                              x: 390
-                              y: 6
-                              width: 108
-                              height: 20
+                              x: 386
+                              y: 7
+                              width: 100
+                              height: 24
                               text: ""
                               text_font: font_small
                               text_align: right
                           - obj:
                               x: 0
-                              y: 29
-                              width: 500
+                              y: 35
+                              width: 486
                               height: 1
                               bg_color: 0xB8B8B8
                               bg_opa: cover
@@ -1118,9 +1118,9 @@ lvgl:
                     - obj:
                         id: position_row_7
                         x: 0
-                        y: 210
-                        width: 500
-                        height: 30
+                        y: 252
+                        width: 486
+                        height: 36
                         bg_opa: transp
                         border_width: 0
                         pad_all: 0
@@ -1129,34 +1129,34 @@ lvgl:
                           - label:
                               id: position_name_7
                               x: 0
-                              y: 6
-                              width: 250
-                              height: 20
+                              y: 7
+                              width: 260
+                              height: 24
                               text: ""
                               text_font: font_small
                               long_mode: DOT
                           - label:
                               id: position_daily_7
-                              x: 270
-                              y: 6
-                              width: 105
-                              height: 20
+                              x: 286
+                              y: 7
+                              width: 86
+                              height: 24
                               text: ""
                               text_font: font_small
                               text_align: right
                           - label:
                               id: position_profit_7
-                              x: 390
-                              y: 6
-                              width: 108
-                              height: 20
+                              x: 386
+                              y: 7
+                              width: 100
+                              height: 24
                               text: ""
                               text_font: font_small
                               text_align: right
                           - obj:
                               x: 0
-                              y: 29
-                              width: 500
+                              y: 35
+                              width: 486
                               height: 1
                               bg_color: 0xB8B8B8
                               bg_opa: cover
@@ -1166,9 +1166,9 @@ lvgl:
                     - obj:
                         id: position_row_8
                         x: 0
-                        y: 240
-                        width: 500
-                        height: 30
+                        y: 288
+                        width: 486
+                        height: 36
                         bg_opa: transp
                         border_width: 0
                         pad_all: 0
@@ -1177,34 +1177,34 @@ lvgl:
                           - label:
                               id: position_name_8
                               x: 0
-                              y: 6
-                              width: 250
-                              height: 20
+                              y: 7
+                              width: 260
+                              height: 24
                               text: ""
                               text_font: font_small
                               long_mode: DOT
                           - label:
                               id: position_daily_8
-                              x: 270
-                              y: 6
-                              width: 105
-                              height: 20
+                              x: 286
+                              y: 7
+                              width: 86
+                              height: 24
                               text: ""
                               text_font: font_small
                               text_align: right
                           - label:
                               id: position_profit_8
-                              x: 390
-                              y: 6
-                              width: 108
-                              height: 20
+                              x: 386
+                              y: 7
+                              width: 100
+                              height: 24
                               text: ""
                               text_font: font_small
                               text_align: right
                           - obj:
                               x: 0
-                              y: 29
-                              width: 500
+                              y: 35
+                              width: 486
                               height: 1
                               bg_color: 0xB8B8B8
                               bg_opa: cover
@@ -1214,9 +1214,9 @@ lvgl:
                     - obj:
                         id: position_row_9
                         x: 0
-                        y: 270
-                        width: 500
-                        height: 30
+                        y: 324
+                        width: 486
+                        height: 36
                         bg_opa: transp
                         border_width: 0
                         pad_all: 0
@@ -1225,34 +1225,34 @@ lvgl:
                           - label:
                               id: position_name_9
                               x: 0
-                              y: 6
-                              width: 250
-                              height: 20
+                              y: 7
+                              width: 260
+                              height: 24
                               text: ""
                               text_font: font_small
                               long_mode: DOT
                           - label:
                               id: position_daily_9
-                              x: 270
-                              y: 6
-                              width: 105
-                              height: 20
+                              x: 286
+                              y: 7
+                              width: 86
+                              height: 24
                               text: ""
                               text_font: font_small
                               text_align: right
                           - label:
                               id: position_profit_9
-                              x: 390
-                              y: 6
-                              width: 108
-                              height: 20
+                              x: 386
+                              y: 7
+                              width: 100
+                              height: 24
                               text: ""
                               text_font: font_small
                               text_align: right
                           - obj:
                               x: 0
-                              y: 29
-                              width: 500
+                              y: 35
+                              width: 486
                               height: 1
                               bg_color: 0xB8B8B8
                               bg_opa: cover
@@ -1264,10 +1264,14 @@ script:
     mode: restart
     then:
       - logger.log:
-          level: INFO
+          level: DEBUG
           format: "Refreshing LVGL dashboard"
       - lambda: |-
           auto set_label = [](lv_obj_t *label, const std::string &text) {
+            const char *current = lv_label_get_text(label);
+            if (current != nullptr && text == current) {
+              return;
+            }
             lv_label_set_text(label, text.c_str());
           };
 
@@ -1451,11 +1455,17 @@ script:
           set_label(id(xtb_profit_value), money(profit, currency));
           set_label(id(xtb_profit_percent_value), percent(profit_percent));
 
+          static bool fan_initialized = false;
+          static bool last_fan_on = false;
           bool fan_on = id(fan_state).state == "on";
-          lv_obj_set_style_bg_color(id(fan_on_btn), lv_color_hex(fan_on ? 0x000000 : 0xFFFFFF), LV_PART_MAIN);
-          lv_obj_set_style_bg_color(id(fan_off_btn), lv_color_hex(fan_on ? 0xFFFFFF : 0x000000), LV_PART_MAIN);
-          lv_obj_set_style_text_color(id(fan_on_label), lv_color_hex(fan_on ? 0xFFFFFF : 0x000000), LV_PART_MAIN);
-          lv_obj_set_style_text_color(id(fan_off_label), lv_color_hex(fan_on ? 0x000000 : 0xFFFFFF), LV_PART_MAIN);
+          if (!fan_initialized || fan_on != last_fan_on) {
+            lv_obj_set_style_bg_color(id(fan_on_btn), lv_color_hex(fan_on ? 0x000000 : 0xFFFFFF), LV_PART_MAIN);
+            lv_obj_set_style_bg_color(id(fan_off_btn), lv_color_hex(fan_on ? 0xFFFFFF : 0x000000), LV_PART_MAIN);
+            lv_obj_set_style_text_color(id(fan_on_label), lv_color_hex(fan_on ? 0xFFFFFF : 0x000000), LV_PART_MAIN);
+            lv_obj_set_style_text_color(id(fan_off_label), lv_color_hex(fan_on ? 0x000000 : 0xFFFFFF), LV_PART_MAIN);
+            fan_initialized = true;
+            last_fan_on = fan_on;
+          }
 
           lv_obj_t *rows[] = {
             id(position_row_0), id(position_row_1), id(position_row_2), id(position_row_3), id(position_row_4),

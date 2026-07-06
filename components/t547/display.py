@@ -30,7 +30,7 @@ CONFIG_SCHEMA = cv.All(
             cv.GenerateID(): cv.declare_id(T547),
             cv.Optional(CONF_GREYSCALE, default=False): cv.boolean,
             cv.Optional(CONF_FAST_REFRESH, default=True): cv.boolean,
-            cv.Optional(CONF_FULL_UPDATE_EVERY, default=24): cv.int_range(min=1, max=250),
+            cv.Optional(CONF_FULL_UPDATE_EVERY, default=24): cv.int_range(min=0, max=1000000),
             cv.Optional(CONF_PARTIAL_CLEAR_CYCLES, default=1): cv.int_range(min=0, max=8),
             cv.Optional(CONF_PARTIAL_THRESHOLD_PERCENT, default=70): cv.int_range(min=1, max=100),
         }

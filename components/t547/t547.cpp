@@ -103,10 +103,13 @@ void T547::display() {
     return;
   }
 
+  const bool periodic_full_due = this->full_update_every_ != 0 &&
+                                 this->update_count_ >= this->full_update_every_;
+  const bool dirty_too_large = this->partial_threshold_percent_ < 100 &&
+                               dirty.width * dirty.height * 100u >
+                                   screen_area * static_cast<uint32_t>(this->partial_threshold_percent_);
   const bool force_full = this->first_update_ || !this->fast_refresh_ ||
-                          this->update_count_ >= this->full_update_every_ ||
-                          (dirty.width * dirty.height * 100u >
-                           screen_area * static_cast<uint32_t>(this->partial_threshold_percent_));
+                          periodic_full_due || dirty_too_large;
 
   if (force_full) {
     this->display_full_();
@@ -150,7 +153,7 @@ bool T547::find_dirty_area_(Rect_t *area) {
     return false;
   }
 
-  constexpr int margin = 24;
+  constexpr int margin = 48;
   int x = std::max(0, min_byte * 2 - margin);
   int right = std::min(width, (max_byte + 1) * 2 + margin);
   int y = std::max(0, min_y - margin);
