@@ -257,10 +257,6 @@ uint8_t T547::required_mono_passes_(bool target_black) const {
   return target_black ? this->fast_mono_passes_ : this->fast_mono_clear_passes_;
 }
 
-uint16_t T547::mono_drive_time_(bool target_black) const {
-  return target_black ? this->fast_mono_time_ : this->fast_mono_clear_time_;
-}
-
 void T547::sync_mono_state_from_buffer_() {
   if (this->mono_state_buffer_ == nullptr) {
     return;
@@ -298,66 +294,49 @@ void T547::output_mono_noop_row_(uint32_t pipeline_finish_time) {
   this->mono_skipping_++;
 }
 
-bool T547::build_fast_mono_row_(Rect_t area, int y, uint8_t pass, uint8_t *row, uint32_t *row_time) {
+bool T547::build_fast_mono_row_(Rect_t area, int y, bool drive_black, uint8_t *row) {
   memset(row, 0, EPD_FAST_LINE_BYTES);
 
   const int width = this->get_width_internal();
   const int start_x = std::max(0, static_cast<int>(area.x));
   const int end_x = std::min(width, static_cast<int>(area.x + area.width));
   bool any = false;
-  uint32_t max_time = this->fast_mono_time_;
 
   for (int x = start_x; x < end_x; x++) {
     const bool target_black = this->mono_pixel_is_black_(x, y);
     const bool previous_buffer_black = this->previous_mono_pixel_is_black_(x, y);
-    const size_t index = static_cast<size_t>(y) * width + x;
-    uint8_t state = this->mono_state_buffer_[index];
-    uint8_t count = state >> 1;
-    const bool previous_target_black = (state & FAST_MONO_TARGET_BLACK) != 0;
 
-    if (target_black != previous_target_black || target_black != previous_buffer_black) {
-      count = 0;
+    if (target_black == previous_buffer_black || target_black != drive_black) {
+      continue;
     }
 
-    const uint8_t required_passes = this->required_mono_passes_(target_black);
-    if (count < required_passes) {
-      const uint8_t command = target_black ? FAST_MONO_COMMAND_DARK : FAST_MONO_COMMAND_LIGHT;
-      row[x / 4] |= command << (2 * (x & 0x03));
-      count++;
-      any = true;
-      max_time = std::max(max_time, static_cast<uint32_t>(this->mono_drive_time_(target_black)));
-    }
-
-    this->mono_state_buffer_[index] = (count << 1) | (target_black ? FAST_MONO_TARGET_BLACK : 0);
+    const uint8_t command = drive_black ? FAST_MONO_COMMAND_DARK : FAST_MONO_COMMAND_LIGHT;
+    row[x / 4] |= command << (2 * (x & 0x03));
+    any = true;
   }
 
   if (any) {
-    *row_time = max_time;
     this->reorder_mono_line_(reinterpret_cast<uint32_t *>(row));
   }
   return any;
 }
 
-bool T547::display_fast_mono_(Rect_t area) {
+bool T547::display_fast_mono_phase_(Rect_t area, bool drive_black, uint8_t passes, uint16_t drive_time) {
   uint8_t row[EPD_FAST_LINE_BYTES];
   bool any_pixel_driven = false;
-  const uint8_t max_passes = std::max(this->fast_mono_passes_, this->fast_mono_clear_passes_);
-  const uint32_t noop_time = this->fast_mono_time_;
 
-  epd_poweron();
-  for (uint8_t pass = 0; pass < max_passes; pass++) {
+  for (uint8_t pass = 0; pass < passes; pass++) {
     bool any_in_pass = false;
     this->mono_skipping_ = 0;
     epd_start_frame();
 
     for (int y = 0; y < this->get_height_internal(); y++) {
       if (y < area.y || y >= area.y + area.height) {
-        this->output_mono_noop_row_(noop_time);
+        this->output_mono_noop_row_(drive_time);
         continue;
       }
 
-      uint32_t row_time = this->fast_mono_time_;
-      if (this->build_fast_mono_row_(area, y, pass, row, &row_time)) {
+      if (this->build_fast_mono_row_(area, y, drive_black, row)) {
         if (this->mono_skipping_ > 0) {
           epd_switch_buffer();
           memcpy(epd_get_current_buffer(), row, EPD_FAST_LINE_BYTES);
@@ -365,16 +344,16 @@ bool T547::display_fast_mono_(Rect_t area) {
         }
         memcpy(epd_get_current_buffer(), row, EPD_FAST_LINE_BYTES);
         this->mono_skipping_ = 0;
-        epd_output_row(row_time);
+        epd_output_row(drive_time);
         any_in_pass = true;
         any_pixel_driven = true;
       } else {
-        this->output_mono_noop_row_(noop_time);
+        this->output_mono_noop_row_(drive_time);
       }
     }
 
     if (this->mono_skipping_ == 0) {
-      epd_output_row(noop_time);
+      epd_output_row(drive_time);
     }
     epd_end_frame();
     App.feed_wdt();
@@ -384,8 +363,16 @@ bool T547::display_fast_mono_(Rect_t area) {
       break;
     }
   }
-  epd_poweroff();
   return any_pixel_driven;
+}
+
+bool T547::display_fast_mono_(Rect_t area) {
+  epd_poweron();
+  const bool cleared = this->display_fast_mono_phase_(area, false, this->fast_mono_clear_passes_,
+                                                     this->fast_mono_clear_time_);
+  const bool darkened = this->display_fast_mono_phase_(area, true, this->fast_mono_passes_, this->fast_mono_time_);
+  epd_poweroff();
+  return cleared || darkened;
 }
 
 }  // namespace T547

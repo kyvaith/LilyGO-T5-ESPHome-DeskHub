@@ -1350,6 +1350,7 @@ script:
   - id: refresh_dashboard
     mode: restart
     then:
+      - delay: 350ms
       - logger.log:
           level: DEBUG
           format: "Refreshing LVGL dashboard"

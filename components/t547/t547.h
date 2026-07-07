@@ -72,12 +72,12 @@ class T547 : public PollingComponent, public display::DisplayBuffer {
   void display_full_();
   void display_partial_(Rect_t area);
   bool display_fast_mono_(Rect_t area);
-  bool build_fast_mono_row_(Rect_t area, int y, uint8_t pass, uint8_t *row, uint32_t *row_time);
+  bool display_fast_mono_phase_(Rect_t area, bool drive_black, uint8_t passes, uint16_t drive_time);
+  bool build_fast_mono_row_(Rect_t area, int y, bool drive_black, uint8_t *row);
   bool mono_pixel_is_black_(int x, int y);
   bool previous_mono_pixel_is_black_(int x, int y);
   bool buffer_mono_pixel_is_black_(const uint8_t *buffer, int x, int y);
   uint8_t required_mono_passes_(bool target_black) const;
-  uint16_t mono_drive_time_(bool target_black) const;
   size_t get_mono_state_length_();
   void sync_mono_state_from_buffer_();
   void output_mono_noop_row_(uint32_t pipeline_finish_time);
