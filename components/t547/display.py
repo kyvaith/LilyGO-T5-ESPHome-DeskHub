@@ -16,8 +16,10 @@ CONF_GREYSCALE = "greyscale"
 CONF_FAST_REFRESH = "fast_refresh"
 CONF_FAST_MONO = "fast_mono"
 CONF_FAST_MONO_PASSES = "fast_mono_passes"
+CONF_FAST_MONO_CLEAR_PASSES = "fast_mono_clear_passes"
 CONF_FAST_MONO_THRESHOLD = "fast_mono_threshold"
 CONF_FAST_MONO_TIME = "fast_mono_time"
+CONF_FAST_MONO_CLEAR_TIME = "fast_mono_clear_time"
 CONF_FULL_UPDATE_EVERY = "full_update_every"
 CONF_PARTIAL_CLEAR_CYCLES = "partial_clear_cycles"
 CONF_PARTIAL_THRESHOLD_PERCENT = "partial_threshold_percent"
@@ -36,8 +38,10 @@ CONFIG_SCHEMA = cv.All(
             cv.Optional(CONF_FAST_REFRESH, default=True): cv.boolean,
             cv.Optional(CONF_FAST_MONO, default=False): cv.boolean,
             cv.Optional(CONF_FAST_MONO_PASSES, default=4): cv.int_range(min=1, max=15),
+            cv.Optional(CONF_FAST_MONO_CLEAR_PASSES, default=10): cv.int_range(min=1, max=63),
             cv.Optional(CONF_FAST_MONO_THRESHOLD, default=14): cv.int_range(min=0, max=15),
             cv.Optional(CONF_FAST_MONO_TIME, default=300): cv.int_range(min=10, max=2000),
+            cv.Optional(CONF_FAST_MONO_CLEAR_TIME, default=550): cv.int_range(min=10, max=3000),
             cv.Optional(CONF_FULL_UPDATE_EVERY, default=24): cv.int_range(min=0, max=1000000),
             cv.Optional(CONF_PARTIAL_CLEAR_CYCLES, default=1): cv.int_range(min=0, max=8),
             cv.Optional(CONF_PARTIAL_THRESHOLD_PERCENT, default=70): cv.int_range(min=1, max=100),
@@ -66,8 +70,10 @@ async def to_code(config):
     cg.add(var.set_fast_refresh(config[CONF_FAST_REFRESH]))
     cg.add(var.set_fast_mono(config[CONF_FAST_MONO]))
     cg.add(var.set_fast_mono_passes(config[CONF_FAST_MONO_PASSES]))
+    cg.add(var.set_fast_mono_clear_passes(config[CONF_FAST_MONO_CLEAR_PASSES]))
     cg.add(var.set_fast_mono_threshold(config[CONF_FAST_MONO_THRESHOLD]))
     cg.add(var.set_fast_mono_time(config[CONF_FAST_MONO_TIME]))
+    cg.add(var.set_fast_mono_clear_time(config[CONF_FAST_MONO_CLEAR_TIME]))
     cg.add(var.set_full_update_every(config[CONF_FULL_UPDATE_EVERY]))
     cg.add(var.set_partial_clear_cycles(config[CONF_PARTIAL_CLEAR_CYCLES]))
     cg.add(var.set_partial_threshold_percent(config[CONF_PARTIAL_THRESHOLD_PERCENT]))

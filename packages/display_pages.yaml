@@ -129,9 +129,11 @@ display:
     greyscale: true
     fast_refresh: true
     fast_mono: true
-    fast_mono_passes: 4
+    fast_mono_passes: 3
+    fast_mono_clear_passes: 12
     fast_mono_threshold: 14
-    fast_mono_time: 300
+    fast_mono_time: 260
+    fast_mono_clear_time: 620
     full_update_every: 0
     partial_threshold_percent: 100
     partial_clear_cycles: 0
@@ -798,7 +800,8 @@ lvgl:
                   y: 166
                   width: 486
                   height: 104
-                  bg_opa: transp
+                  bg_color: 0xFFFFFF
+                  bg_opa: cover
                   border_width: 0
                   pad_all: 0
                   type: LINE
@@ -1354,9 +1357,44 @@ script:
           auto set_label = [](lv_obj_t *label, const std::string &text) {
             const char *current = lv_label_get_text(label);
             if (current != nullptr && text == current) {
-              return;
+              return false;
             }
+            lv_obj_invalidate(label);
             lv_label_set_text(label, text.c_str());
+            lv_obj_invalidate(label);
+            return true;
+          };
+
+          auto make_label_opaque = [](lv_obj_t *label) {
+            lv_obj_set_style_bg_color(label, lv_color_hex(0xFFFFFF), LV_PART_MAIN);
+            lv_obj_set_style_bg_opa(label, LV_OPA_COVER, LV_PART_MAIN);
+            lv_obj_set_style_text_color(label, lv_color_hex(0x000000), LV_PART_MAIN);
+            lv_obj_set_style_border_width(label, 0, LV_PART_MAIN);
+          };
+
+          lv_obj_t *opaque_labels[] = {
+            id(header_date), id(header_time),
+            id(weather_temp_value), id(weather_condition_value),
+            id(forecast_day_0), id(forecast_day_1), id(forecast_day_2), id(forecast_day_3),
+            id(forecast_temp_0), id(forecast_temp_1), id(forecast_temp_2), id(forecast_temp_3),
+            id(indoor_temp_value), id(indoor_humidity_value),
+            id(xtb_balance_value), id(xtb_profit_value), id(xtb_profit_percent_value),
+            id(position_name_0), id(position_name_1), id(position_name_2), id(position_name_3), id(position_name_4),
+            id(position_name_5), id(position_name_6), id(position_name_7), id(position_name_8), id(position_name_9),
+            id(position_daily_0), id(position_daily_1), id(position_daily_2), id(position_daily_3), id(position_daily_4),
+            id(position_daily_5), id(position_daily_6), id(position_daily_7), id(position_daily_8), id(position_daily_9),
+            id(position_profit_0), id(position_profit_1), id(position_profit_2), id(position_profit_3), id(position_profit_4),
+            id(position_profit_5), id(position_profit_6), id(position_profit_7), id(position_profit_8), id(position_profit_9)
+          };
+          for (lv_obj_t *label : opaque_labels) {
+            make_label_opaque(label);
+          }
+
+          lv_obj_t *redraw_roots[] = {
+            id(header_date), id(header_time), id(weather_card), id(home_card), id(investments_card), id(xtb_profit_chart)
+          };
+          for (lv_obj_t *obj : redraw_roots) {
+            lv_obj_invalidate(obj);
           };
 
           auto compact_spaces = [](std::string value) {
@@ -1546,25 +1584,31 @@ script:
           int chart_point = (int) roundf((chart_percent + 10.0f) * 100.0f / 30.0f);
           chart_point = std::max(0, std::min(100, chart_point));
           if (!chart_seeded) {
+            lv_obj_invalidate(id(xtb_profit_chart));
             for (int i = 0; i < 24; i++) {
               lv_chart_set_value_by_id(id(xtb_profit_chart), id(xtb_profit_series), i, chart_point);
             }
             chart_seeded = true;
             last_chart_minute = minute_key;
             lv_chart_refresh(id(xtb_profit_chart));
+            lv_obj_invalidate(id(xtb_profit_chart));
           } else if (minute_key != last_chart_minute) {
+            lv_obj_invalidate(id(xtb_profit_chart));
             lv_chart_set_next_value(id(xtb_profit_chart), id(xtb_profit_series), chart_point);
             last_chart_minute = minute_key;
             lv_chart_refresh(id(xtb_profit_chart));
+            lv_obj_invalidate(id(xtb_profit_chart));
           }
 
           static bool fan_initialized = false;
           static bool last_fan_on = false;
           bool fan_on = id(fan_state).state == "on";
           if (!fan_initialized || fan_on != last_fan_on) {
+            lv_obj_invalidate(id(fan_switch_btn));
             lv_obj_set_x(id(fan_switch_fill), fan_on ? 0 : 63);
             lv_obj_set_style_text_color(id(fan_on_label), lv_color_hex(fan_on ? 0xFFFFFF : 0x000000), LV_PART_MAIN);
             lv_obj_set_style_text_color(id(fan_off_label), lv_color_hex(fan_on ? 0x000000 : 0xFFFFFF), LV_PART_MAIN);
+            lv_obj_invalidate(id(fan_switch_btn));
             fan_initialized = true;
             last_fan_on = fan_on;
           }

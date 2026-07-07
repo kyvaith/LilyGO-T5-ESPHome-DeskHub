@@ -6,6 +6,7 @@
 #ifdef USE_ESP32_FRAMEWORK_ARDUINO
 
 #include <esp32-hal-gpio.h>
+#include <Arduino.h>
 #include <algorithm>
 #include <cstring>
 
@@ -50,7 +51,7 @@ void T547::setup() {
   memset(this->previous_buffer_, 0xFF, buffer_size);
   memset(this->partial_buffer_, 0xFF, buffer_size);
   if (this->mono_state_buffer_ != nullptr) {
-    memset(this->mono_state_buffer_, this->fast_mono_passes_ << 1, mono_state_size);
+    memset(this->mono_state_buffer_, this->fast_mono_clear_passes_ << 1, mono_state_size);
   }
   ESP_LOGV(TAG, "Initialize complete");
 }
@@ -234,11 +235,30 @@ void T547::display_partial_(Rect_t area) {
   this->update_count_++;
 }
 
-bool T547::mono_pixel_is_black_(int x, int y) {
+bool T547::buffer_mono_pixel_is_black_(const uint8_t *buffer, int x, int y) {
+  if (buffer == nullptr) {
+    return false;
+  }
   const int stride = this->get_width_internal() / 2;
-  const uint8_t packed = this->buffer_[y * stride + x / 2];
+  const uint8_t packed = buffer[y * stride + x / 2];
   const uint8_t nibble = (x & 1) ? (packed >> 4) : (packed & 0x0F);
   return nibble < this->fast_mono_threshold_;
+}
+
+bool T547::mono_pixel_is_black_(int x, int y) {
+  return this->buffer_mono_pixel_is_black_(this->buffer_, x, y);
+}
+
+bool T547::previous_mono_pixel_is_black_(int x, int y) {
+  return this->buffer_mono_pixel_is_black_(this->previous_buffer_, x, y);
+}
+
+uint8_t T547::required_mono_passes_(bool target_black) const {
+  return target_black ? this->fast_mono_passes_ : this->fast_mono_clear_passes_;
+}
+
+uint16_t T547::mono_drive_time_(bool target_black) const {
+  return target_black ? this->fast_mono_time_ : this->fast_mono_clear_time_;
 }
 
 void T547::sync_mono_state_from_buffer_() {
@@ -247,10 +267,10 @@ void T547::sync_mono_state_from_buffer_() {
   }
   const int width = this->get_width_internal();
   const int height = this->get_height_internal();
-  const uint8_t saturated = this->fast_mono_passes_ << 1;
   for (int y = 0; y < height; y++) {
     for (int x = 0; x < width; x++) {
       const bool black = this->mono_pixel_is_black_(x, y);
+      const uint8_t saturated = this->required_mono_passes_(black) << 1;
       this->mono_state_buffer_[y * width + x] = saturated | (black ? FAST_MONO_TARGET_BLACK : 0);
     }
   }
@@ -278,36 +298,41 @@ void T547::output_mono_noop_row_(uint32_t pipeline_finish_time) {
   this->mono_skipping_++;
 }
 
-bool T547::build_fast_mono_row_(Rect_t area, int y, uint8_t *row) {
+bool T547::build_fast_mono_row_(Rect_t area, int y, uint8_t pass, uint8_t *row, uint32_t *row_time) {
   memset(row, 0, EPD_FAST_LINE_BYTES);
 
   const int width = this->get_width_internal();
   const int start_x = std::max(0, static_cast<int>(area.x));
   const int end_x = std::min(width, static_cast<int>(area.x + area.width));
   bool any = false;
+  uint32_t max_time = this->fast_mono_time_;
 
   for (int x = start_x; x < end_x; x++) {
     const bool target_black = this->mono_pixel_is_black_(x, y);
+    const bool previous_buffer_black = this->previous_mono_pixel_is_black_(x, y);
     const size_t index = static_cast<size_t>(y) * width + x;
     uint8_t state = this->mono_state_buffer_[index];
     uint8_t count = state >> 1;
     const bool previous_target_black = (state & FAST_MONO_TARGET_BLACK) != 0;
 
-    if (target_black != previous_target_black) {
+    if (target_black != previous_target_black || target_black != previous_buffer_black) {
       count = 0;
     }
 
-    if (count < this->fast_mono_passes_) {
+    const uint8_t required_passes = this->required_mono_passes_(target_black);
+    if (count < required_passes) {
       const uint8_t command = target_black ? FAST_MONO_COMMAND_DARK : FAST_MONO_COMMAND_LIGHT;
       row[x / 4] |= command << (2 * (x & 0x03));
       count++;
       any = true;
+      max_time = std::max(max_time, static_cast<uint32_t>(this->mono_drive_time_(target_black)));
     }
 
     this->mono_state_buffer_[index] = (count << 1) | (target_black ? FAST_MONO_TARGET_BLACK : 0);
   }
 
   if (any) {
+    *row_time = max_time;
     this->reorder_mono_line_(reinterpret_cast<uint32_t *>(row));
   }
   return any;
@@ -316,34 +341,44 @@ bool T547::build_fast_mono_row_(Rect_t area, int y, uint8_t *row) {
 bool T547::display_fast_mono_(Rect_t area) {
   uint8_t row[EPD_FAST_LINE_BYTES];
   bool any_pixel_driven = false;
+  const uint8_t max_passes = std::max(this->fast_mono_passes_, this->fast_mono_clear_passes_);
+  const uint32_t noop_time = this->fast_mono_time_;
 
   epd_poweron();
-  for (uint8_t pass = 0; pass < this->fast_mono_passes_; pass++) {
+  for (uint8_t pass = 0; pass < max_passes; pass++) {
     bool any_in_pass = false;
     this->mono_skipping_ = 0;
     epd_start_frame();
 
     for (int y = 0; y < this->get_height_internal(); y++) {
       if (y < area.y || y >= area.y + area.height) {
-        this->output_mono_noop_row_(this->fast_mono_time_);
+        this->output_mono_noop_row_(noop_time);
         continue;
       }
 
-      if (this->build_fast_mono_row_(area, y, row)) {
+      uint32_t row_time = this->fast_mono_time_;
+      if (this->build_fast_mono_row_(area, y, pass, row, &row_time)) {
+        if (this->mono_skipping_ > 0) {
+          epd_switch_buffer();
+          memcpy(epd_get_current_buffer(), row, EPD_FAST_LINE_BYTES);
+          epd_switch_buffer();
+        }
         memcpy(epd_get_current_buffer(), row, EPD_FAST_LINE_BYTES);
         this->mono_skipping_ = 0;
-        epd_output_row(this->fast_mono_time_);
+        epd_output_row(row_time);
         any_in_pass = true;
         any_pixel_driven = true;
       } else {
-        this->output_mono_noop_row_(this->fast_mono_time_);
+        this->output_mono_noop_row_(noop_time);
       }
     }
 
     if (this->mono_skipping_ == 0) {
-      epd_output_row(this->fast_mono_time_);
+      epd_output_row(noop_time);
     }
     epd_end_frame();
+    App.feed_wdt();
+    delay(1);
 
     if (!any_in_pass) {
       break;

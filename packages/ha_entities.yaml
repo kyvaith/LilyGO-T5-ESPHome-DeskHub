@@ -3,54 +3,84 @@ sensor:
     id: indoor_temperature
     entity_id: ${entity_indoor_temperature}
     internal: true
+    on_value:
+      then:
+        - script.execute: refresh_dashboard
 
   - platform: homeassistant
     id: indoor_humidity
     entity_id: ${entity_indoor_humidity}
     internal: true
+    on_value:
+      then:
+        - script.execute: refresh_dashboard
 
   - platform: homeassistant
     id: weather_temperature
     entity_id: ${entity_weather}
     attribute: temperature
     internal: true
+    on_value:
+      then:
+        - script.execute: refresh_dashboard
 
   - platform: homeassistant
     id: xtb_balance
     entity_id: ${entity_xtb_balance}
     internal: true
+    on_value:
+      then:
+        - script.execute: refresh_dashboard
 
 text_sensor:
   - platform: homeassistant
     id: weather_condition
     entity_id: ${entity_weather}
     internal: true
+    on_value:
+      then:
+        - script.execute: refresh_dashboard
 
   - platform: homeassistant
     id: weather_forecast
     entity_id: ${entity_weather}
     attribute: forecast
     internal: true
+    on_value:
+      then:
+        - script.execute: refresh_dashboard
 
   - platform: homeassistant
     id: fan_state
     entity_id: ${entity_fan}
     internal: true
+    on_value:
+      then:
+        - script.execute: refresh_dashboard
 
   - platform: homeassistant
     id: xtb_summary
     entity_id: ${entity_xtb_balance}
     attribute: summary
     internal: true
+    on_value:
+      then:
+        - script.execute: refresh_dashboard
 
   - platform: homeassistant
     id: xtb_positions
     entity_id: ${entity_xtb_balance}
     attribute: positions
     internal: true
+    on_value:
+      then:
+        - script.execute: refresh_dashboard
 
   - platform: homeassistant
     id: xtb_currency
     entity_id: ${entity_xtb_balance}
     attribute: unit_of_measurement
     internal: true
+    on_value:
+      then:
+        - script.execute: refresh_dashboard

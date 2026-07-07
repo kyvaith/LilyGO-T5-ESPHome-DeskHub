@@ -5,7 +5,7 @@ touchscreen:
     display: epaper_display
     on_touch:
       - lambda: |-
-          ESP_LOGD("touch", "Touch x=%d y=%d", touch.x, touch.y);
+          ESP_LOGI("touch", "Touch x=%d y=%d", touch.x, touch.y);
 
 binary_sensor:
   - platform: gpio
