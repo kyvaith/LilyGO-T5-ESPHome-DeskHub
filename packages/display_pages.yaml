@@ -2274,26 +2274,69 @@ script:
             extra_position_profits[5], extra_position_profits[6], extra_position_profits[7], extra_position_profits[8], extra_position_profits[9]
           };
 
-          std::string row_names[] = {
-            id(xtb_position_name_0).state, id(xtb_position_name_1).state, id(xtb_position_name_2).state, id(xtb_position_name_3).state, id(xtb_position_name_4).state,
-            id(xtb_position_name_5).state, id(xtb_position_name_6).state, id(xtb_position_name_7).state, id(xtb_position_name_8).state, id(xtb_position_name_9).state
+          auto fallback_name = [&](int index) -> std::string {
+            switch (index) {
+              case 0: return id(xtb_position_name_0).state;
+              case 1: return id(xtb_position_name_1).state;
+              case 2: return id(xtb_position_name_2).state;
+              case 3: return id(xtb_position_name_3).state;
+              case 4: return id(xtb_position_name_4).state;
+              case 5: return id(xtb_position_name_5).state;
+              case 6: return id(xtb_position_name_6).state;
+              case 7: return id(xtb_position_name_7).state;
+              case 8: return id(xtb_position_name_8).state;
+              case 9: return id(xtb_position_name_9).state;
+              default: return "";
+            }
           };
-          float row_daily[] = {
-            id(xtb_position_daily_0).state, id(xtb_position_daily_1).state, id(xtb_position_daily_2).state, id(xtb_position_daily_3).state, id(xtb_position_daily_4).state,
-            id(xtb_position_daily_5).state, id(xtb_position_daily_6).state, id(xtb_position_daily_7).state, id(xtb_position_daily_8).state, id(xtb_position_daily_9).state
+          auto fallback_daily = [&](int index) -> float {
+            switch (index) {
+              case 0: return id(xtb_position_daily_0).state;
+              case 1: return id(xtb_position_daily_1).state;
+              case 2: return id(xtb_position_daily_2).state;
+              case 3: return id(xtb_position_daily_3).state;
+              case 4: return id(xtb_position_daily_4).state;
+              case 5: return id(xtb_position_daily_5).state;
+              case 6: return id(xtb_position_daily_6).state;
+              case 7: return id(xtb_position_daily_7).state;
+              case 8: return id(xtb_position_daily_8).state;
+              case 9: return id(xtb_position_daily_9).state;
+              default: return NAN;
+            }
           };
-          float row_profits[] = {
-            id(xtb_position_profit_0).state, id(xtb_position_profit_1).state, id(xtb_position_profit_2).state, id(xtb_position_profit_3).state, id(xtb_position_profit_4).state,
-            id(xtb_position_profit_5).state, id(xtb_position_profit_6).state, id(xtb_position_profit_7).state, id(xtb_position_profit_8).state, id(xtb_position_profit_9).state
+          auto fallback_profit = [&](int index) -> float {
+            switch (index) {
+              case 0: return id(xtb_position_profit_0).state;
+              case 1: return id(xtb_position_profit_1).state;
+              case 2: return id(xtb_position_profit_2).state;
+              case 3: return id(xtb_position_profit_3).state;
+              case 4: return id(xtb_position_profit_4).state;
+              case 5: return id(xtb_position_profit_5).state;
+              case 6: return id(xtb_position_profit_6).state;
+              case 7: return id(xtb_position_profit_7).state;
+              case 8: return id(xtb_position_profit_8).state;
+              case 9: return id(xtb_position_profit_9).state;
+              default: return NAN;
+            }
           };
-          std::string positions = id(xtb_positions).state;
-          std::string deskhub_rows = id(xtb_deskhub_rows).state;
+
+          const std::string &positions = id(xtb_positions).state;
+          const std::string &deskhub_rows = id(xtb_deskhub_rows).state;
           const bool use_deskhub_rows = valid_text(deskhub_rows);
           const bool use_positions_json = valid_text(positions);
 
-          std::string display_names[MAX_POSITION_ROWS];
-          float display_daily[MAX_POSITION_ROWS];
-          float display_profits[MAX_POSITION_ROWS];
+          struct PositionDisplayRow {
+            std::string name;
+            float daily;
+            float profit;
+          };
+          static PositionDisplayRow display_rows[MAX_POSITION_ROWS];
+          for (int i = 0; i < MAX_POSITION_ROWS; i++) {
+            display_rows[i].name.clear();
+            display_rows[i].daily = NAN;
+            display_rows[i].profit = NAN;
+          }
+
           int visible = 0;
           for (int i = 0; i < MAX_POSITION_ROWS; i++) {
             std::string name;
@@ -2317,39 +2360,37 @@ script:
                 if (isnan(row_profit)) row_profit = number_from(item, "profit_net", NAN);
               }
             } else if (i < BASE_POSITION_ROWS) {
-              name = row_names[i];
-              daily_change = row_daily[i];
-              row_profit = row_profits[i];
+              name = fallback_name(i);
+              daily_change = fallback_daily(i);
+              row_profit = fallback_profit(i);
             }
             name = compact_spaces(name);
             if (!valid_text(name) && isnan(daily_change) && isnan(row_profit)) {
               continue;
             }
             if (!valid_text(name)) name = std::string("Pozycja ") + to_string(i + 1);
-            display_names[visible] = name;
-            display_daily[visible] = daily_change;
-            display_profits[visible] = row_profit;
+            display_rows[visible].name = name;
+            display_rows[visible].daily = daily_change;
+            display_rows[visible].profit = row_profit;
             visible++;
             if (visible >= MAX_POSITION_ROWS) break;
           }
 
           for (int i = 0; i < visible - 1; i++) {
             for (int j = i + 1; j < visible; j++) {
-              float a = isnan(display_profits[i]) ? -1000000000.0f : display_profits[i];
-              float b = isnan(display_profits[j]) ? -1000000000.0f : display_profits[j];
+              float a = isnan(display_rows[i].profit) ? -1000000000.0f : display_rows[i].profit;
+              float b = isnan(display_rows[j].profit) ? -1000000000.0f : display_rows[j].profit;
               if (b > a) {
-                std::swap(display_names[i], display_names[j]);
-                std::swap(display_daily[i], display_daily[j]);
-                std::swap(display_profits[i], display_profits[j]);
+                std::swap(display_rows[i], display_rows[j]);
               }
             }
           }
 
           for (int i = 0; i < MAX_POSITION_ROWS; i++) {
             if (i < visible) {
-              set_label(names[i], display_names[i]);
-              set_label(daily[i], percent(display_daily[i]));
-              set_label(profits[i], money(display_profits[i], currency));
+              set_label(names[i], display_rows[i].name);
+              set_label(daily[i], percent(display_rows[i].daily));
+              set_label(profits[i], money(display_rows[i].profit, currency));
               lv_obj_clear_flag(rows[i], LV_OBJ_FLAG_HIDDEN);
             } else {
               set_label(names[i], "");
@@ -2363,7 +2404,9 @@ script:
           if (xtb_debug_logs < 5 || visible == 0) {
             ESP_LOGI("dashboard", "XTB balance=%.2f profit=%.2f profit_pct=%.2f rows=%d deskhub_rows_len=%u positions_len=%u row0_name='%s' row0_daily=%.2f row0_profit=%.2f",
                      balance, profit, profit_percent, visible, (unsigned) deskhub_rows.size(), (unsigned) positions.size(),
-                     visible > 0 ? display_names[0].c_str() : row_names[0].c_str(), row_daily[0], row_profits[0]);
+                     visible > 0 ? display_rows[0].name.c_str() : fallback_name(0).c_str(),
+                     visible > 0 ? display_rows[0].daily : fallback_daily(0),
+                     visible > 0 ? display_rows[0].profit : fallback_profit(0));
             xtb_debug_logs++;
           }
 

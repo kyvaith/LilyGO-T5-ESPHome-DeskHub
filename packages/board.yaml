@@ -30,6 +30,8 @@ esp32:
   flash_size: 16MB
   framework:
     type: arduino
+    advanced:
+      loop_task_stack_size: 16384
 
 psram:
   mode: octal
@@ -37,7 +39,8 @@ psram:
 
 logger:
   level: INFO
-  baud_rate: 0
+  baud_rate: 115200
+  hardware_uart: USB_SERIAL_JTAG
 
 api:
   homeassistant_services: true
