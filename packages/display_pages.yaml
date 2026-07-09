@@ -918,7 +918,7 @@ lvgl:
                         type: LINE
                         point_count: 24
                         update_mode: SHIFT
-                        div_line_count_hor: 4
+                        div_line_count_hor: 5
                         div_line_count_ver: 1
                         main:
                           pad_left: 0
@@ -974,7 +974,7 @@ lvgl:
                     - label:
                         id: xtb_axis_label_upper_mid
                         x: 0
-                        y: 33
+                        y: 27
                         width: 42
                         height: 14
                         text: "+10%"
@@ -986,7 +986,7 @@ lvgl:
                     - label:
                         id: xtb_axis_label_zero
                         x: 0
-                        y: 59
+                        y: 46
                         width: 42
                         height: 14
                         text: "0%"
@@ -2170,20 +2170,20 @@ script:
           };
 
           auto render_chart = [&]() {
-            float required_top = 20.0f;
+            float required_limit = 20.0f;
             for (int i = 0; i < 24; i++) {
               if (isnan(chart_values[i])) continue;
-              if (chart_values[i] > required_top) required_top = chart_values[i];
-              if (chart_values[i] < -required_top / 2.0f) required_top = -2.0f * chart_values[i];
+              float abs_value = fabsf(chart_values[i]);
+              if (abs_value > required_limit) required_limit = abs_value;
             }
-            float chart_top = ceilf(required_top / 10.0f) * 10.0f;
+            float chart_top = ceilf(required_limit / 10.0f) * 10.0f;
             if (chart_top < 20.0f) chart_top = 20.0f;
-            float chart_bottom = -chart_top / 2.0f;
+            float chart_bottom = -chart_top;
             const float chart_span = chart_top - chart_bottom;
 
             set_label(id(xtb_axis_label_top), axis_percent(chart_top));
-            set_label(id(xtb_axis_label_upper_mid), axis_percent(chart_top - chart_span / 3.0f));
-            set_label(id(xtb_axis_label_zero), axis_percent(chart_top - chart_span * 2.0f / 3.0f));
+            set_label(id(xtb_axis_label_upper_mid), axis_percent(chart_top / 2.0f));
+            set_label(id(xtb_axis_label_zero), "0%");
             set_label(id(xtb_axis_label_bottom), axis_percent(chart_bottom));
 
             lv_obj_invalidate(id(xtb_chart_area));
