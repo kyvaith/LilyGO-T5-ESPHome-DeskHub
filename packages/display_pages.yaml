@@ -5,7 +5,7 @@ globals:
   - id: xtb_chart_history
     type: std::string
     restore_value: true
-    max_restore_data_length: 128
+    max_restore_data_length: 240
     initial_value: '""'
     update_interval: 60s
 
@@ -960,6 +960,7 @@ lvgl:
                         scrollbar_mode: "off"
 
                     - label:
+                        id: xtb_axis_label_top
                         x: 0
                         y: 7
                         width: 42
@@ -971,6 +972,7 @@ lvgl:
                         bg_opa: cover
 
                     - label:
+                        id: xtb_axis_label_upper_mid
                         x: 0
                         y: 33
                         width: 42
@@ -982,6 +984,7 @@ lvgl:
                         bg_opa: cover
 
                     - label:
+                        id: xtb_axis_label_zero
                         x: 0
                         y: 59
                         width: 42
@@ -993,6 +996,7 @@ lvgl:
                         bg_opa: cover
 
                     - label:
+                        id: xtb_axis_label_bottom
                         x: 0
                         y: 84
                         width: 42
@@ -1689,6 +1693,73 @@ script:
             lv_obj_set_style_border_width(label, 0, LV_PART_MAIN);
           };
 
+          constexpr int MAX_POSITION_ROWS = 20;
+          constexpr int BASE_POSITION_ROWS = 10;
+          static lv_obj_t *extra_position_rows[MAX_POSITION_ROWS - BASE_POSITION_ROWS] = {};
+          static lv_obj_t *extra_position_names[MAX_POSITION_ROWS - BASE_POSITION_ROWS] = {};
+          static lv_obj_t *extra_position_daily[MAX_POSITION_ROWS - BASE_POSITION_ROWS] = {};
+          static lv_obj_t *extra_position_profits[MAX_POSITION_ROWS - BASE_POSITION_ROWS] = {};
+
+          auto copy_label_style = [](lv_obj_t *target, lv_obj_t *source) {
+            lv_obj_set_style_text_font(target, lv_obj_get_style_text_font(source, LV_PART_MAIN), LV_PART_MAIN);
+            lv_obj_set_style_text_color(target, lv_obj_get_style_text_color(source, LV_PART_MAIN), LV_PART_MAIN);
+            lv_obj_set_style_bg_color(target, lv_obj_get_style_bg_color(source, LV_PART_MAIN), LV_PART_MAIN);
+            lv_obj_set_style_bg_opa(target, lv_obj_get_style_bg_opa(source, LV_PART_MAIN), LV_PART_MAIN);
+            lv_obj_set_style_border_width(target, 0, LV_PART_MAIN);
+          };
+
+          if (extra_position_rows[0] == nullptr) {
+            for (int i = 0; i < MAX_POSITION_ROWS - BASE_POSITION_ROWS; i++) {
+              const int row_number = BASE_POSITION_ROWS + i;
+              lv_obj_t *row = lv_obj_create(id(positions_list));
+              lv_obj_remove_style_all(row);
+              lv_obj_set_pos(row, 0, row_number * 29);
+              lv_obj_set_size(row, 532, 29);
+              lv_obj_set_style_bg_opa(row, LV_OPA_TRANSP, LV_PART_MAIN);
+              lv_obj_set_style_border_width(row, 0, LV_PART_MAIN);
+              lv_obj_set_style_pad_all(row, 0, LV_PART_MAIN);
+              lv_obj_clear_flag(row, LV_OBJ_FLAG_SCROLLABLE);
+              lv_obj_clear_flag(row, LV_OBJ_FLAG_CLICKABLE);
+
+              lv_obj_t *name = lv_label_create(row);
+              lv_obj_set_pos(name, 18, 4);
+              lv_obj_set_size(name, 270, 22);
+              lv_label_set_text(name, "");
+              lv_label_set_long_mode(name, LV_LABEL_LONG_DOT);
+              copy_label_style(name, id(position_name_0));
+
+              lv_obj_t *daily = lv_label_create(row);
+              lv_obj_set_pos(daily, 306, 4);
+              lv_obj_set_size(daily, 108, 22);
+              lv_label_set_text(daily, "");
+              lv_obj_set_style_text_align(daily, LV_TEXT_ALIGN_RIGHT, LV_PART_MAIN);
+              copy_label_style(daily, id(position_daily_0));
+
+              lv_obj_t *profit = lv_label_create(row);
+              lv_obj_set_pos(profit, 424, 4);
+              lv_obj_set_size(profit, 90, 22);
+              lv_label_set_text(profit, "");
+              lv_obj_set_style_text_align(profit, LV_TEXT_ALIGN_RIGHT, LV_PART_MAIN);
+              copy_label_style(profit, id(position_profit_0));
+
+              lv_obj_t *separator = lv_obj_create(row);
+              lv_obj_remove_style_all(separator);
+              lv_obj_set_pos(separator, 0, 28);
+              lv_obj_set_size(separator, 532, 1);
+              lv_obj_set_style_bg_color(separator, lv_color_hex(0xB8B8B8), LV_PART_MAIN);
+              lv_obj_set_style_bg_opa(separator, LV_OPA_COVER, LV_PART_MAIN);
+              lv_obj_set_style_border_width(separator, 0, LV_PART_MAIN);
+              lv_obj_clear_flag(separator, LV_OBJ_FLAG_SCROLLABLE);
+              lv_obj_clear_flag(separator, LV_OBJ_FLAG_CLICKABLE);
+
+              extra_position_rows[i] = row;
+              extra_position_names[i] = name;
+              extra_position_daily[i] = daily;
+              extra_position_profits[i] = profit;
+            }
+            lv_obj_update_layout(id(positions_list));
+          }
+
           lv_obj_t *opaque_labels[] = {
             id(header_date), id(header_time),
             id(weather_main_icon), id(weather_temp_value), id(weather_temp_unit), id(weather_condition_value),
@@ -1697,6 +1768,7 @@ script:
             id(forecast_temp_0), id(forecast_temp_1), id(forecast_temp_2), id(forecast_temp_3),
             id(indoor_temp_value), id(indoor_temp_unit), id(indoor_humidity_value),
             id(xtb_balance_value), id(xtb_profit_value), id(xtb_profit_percent_value),
+            id(xtb_axis_label_top), id(xtb_axis_label_upper_mid), id(xtb_axis_label_zero), id(xtb_axis_label_bottom),
             id(position_name_0), id(position_name_1), id(position_name_2), id(position_name_3), id(position_name_4),
             id(position_name_5), id(position_name_6), id(position_name_7), id(position_name_8), id(position_name_9),
             id(position_daily_0), id(position_daily_1), id(position_daily_2), id(position_daily_3), id(position_daily_4),
@@ -1706,6 +1778,11 @@ script:
           };
           for (lv_obj_t *label : opaque_labels) {
             make_label_opaque(label);
+          }
+          for (int i = 0; i < MAX_POSITION_ROWS - BASE_POSITION_ROWS; i++) {
+            make_label_opaque(extra_position_names[i]);
+            make_label_opaque(extra_position_daily[i]);
+            make_label_opaque(extra_position_profits[i]);
           }
 
           lv_obj_set_style_width(id(xtb_profit_chart), 0, LV_PART_INDICATOR);
@@ -1898,6 +1975,18 @@ script:
             return out;
           };
 
+          auto axis_percent = [](float value) {
+            char buffer[24];
+            if (fabsf(value) < 0.05f) {
+              snprintf(buffer, sizeof(buffer), "0%%");
+            } else {
+              snprintf(buffer, sizeof(buffer), "%+.0f%%", value);
+            }
+            std::string out(buffer);
+            std::replace(out.begin(), out.end(), '.', ',');
+            return out;
+          };
+
           auto temp = [](float value, bool decimal) {
             if (isnan(value)) return std::string("--°C");
             char buffer[24];
@@ -2028,21 +2117,16 @@ script:
 
           static bool chart_seeded = false;
           static int last_chart_minute = -1;
-          static int chart_points[24] = {};
+          static float chart_values[24] = {};
           const int minute_key = now.is_valid() ? (now.hour * 60 + now.minute) : -2;
           const bool chart_value_valid = !isnan(profit_percent);
-          int chart_point = 50;
-          if (chart_value_valid) {
-            chart_point = (int) roundf((profit_percent + 10.0f) * 100.0f / 30.0f);
-            chart_point = std::max(0, std::min(100, chart_point));
-          }
 
           auto save_chart_history = [&]() {
-            char buffer[128];
-            size_t offset = 0;
+            char buffer[256];
+            size_t offset = snprintf(buffer, sizeof(buffer), "v2:");
             for (int i = 0; i < 24; i++) {
-              int written = snprintf(buffer + offset, sizeof(buffer) - offset, "%s%d", i == 0 ? "" : ",",
-                                     std::max(0, std::min(100, chart_points[i])));
+              int written = snprintf(buffer + offset, sizeof(buffer) - offset, "%s%.2f", i == 0 ? "" : ",",
+                                     chart_values[i]);
               if (written <= 0 || static_cast<size_t>(written) >= sizeof(buffer) - offset) {
                 return;
               }
@@ -2053,12 +2137,12 @@ script:
 
           auto load_chart_history = [&]() {
             const std::string &history = id(xtb_chart_history);
-            if (history.empty()) {
+            if (history.empty() || history.compare(0, 3, "v2:") != 0) {
               return false;
             }
-            int parsed[24] = {};
+            float parsed[24] = {};
             int index = 0;
-            size_t start = 0;
+            size_t start = 3;
             while (start <= history.size() && index < 24) {
               size_t end = history.find(',', start);
               std::string token = history.substr(start, end == std::string::npos ? std::string::npos : end - start);
@@ -2066,11 +2150,11 @@ script:
                 return false;
               }
               char *parse_end = nullptr;
-              long value = strtol(token.c_str(), &parse_end, 10);
+              float value = strtof(token.c_str(), &parse_end);
               if (parse_end == token.c_str() || *parse_end != '\0') {
                 return false;
               }
-              parsed[index++] = std::max(0L, std::min(100L, value));
+              parsed[index++] = value;
               if (end == std::string::npos) {
                 break;
               }
@@ -2080,48 +2164,69 @@ script:
               return false;
             }
             for (int i = 0; i < 24; i++) {
-              chart_points[i] = parsed[i];
+              chart_values[i] = parsed[i];
             }
             return true;
+          };
+
+          auto render_chart = [&]() {
+            float required_top = 20.0f;
+            for (int i = 0; i < 24; i++) {
+              if (isnan(chart_values[i])) continue;
+              if (chart_values[i] > required_top) required_top = chart_values[i];
+              if (chart_values[i] < -required_top / 2.0f) required_top = -2.0f * chart_values[i];
+            }
+            float chart_top = ceilf(required_top / 10.0f) * 10.0f;
+            if (chart_top < 20.0f) chart_top = 20.0f;
+            float chart_bottom = -chart_top / 2.0f;
+            const float chart_span = chart_top - chart_bottom;
+
+            set_label(id(xtb_axis_label_top), axis_percent(chart_top));
+            set_label(id(xtb_axis_label_upper_mid), axis_percent(chart_top - chart_span / 3.0f));
+            set_label(id(xtb_axis_label_zero), axis_percent(chart_top - chart_span * 2.0f / 3.0f));
+            set_label(id(xtb_axis_label_bottom), axis_percent(chart_bottom));
+
+            lv_obj_invalidate(id(xtb_chart_area));
+            lv_obj_invalidate(id(xtb_profit_chart));
+            for (int i = 0; i < 24; i++) {
+              float scaled = (chart_values[i] - chart_bottom) * 100.0f / chart_span;
+              int point = std::max(0, std::min(100, (int) roundf(scaled)));
+              lv_chart_set_value_by_id(id(xtb_profit_chart), id(xtb_profit_series), i, point);
+            }
+            lv_chart_refresh(id(xtb_profit_chart));
+            lv_obj_invalidate(id(xtb_profit_chart));
+            lv_obj_invalidate(id(xtb_chart_area));
           };
 
           if (!chart_seeded) {
             bool restored_chart = load_chart_history();
             if (!restored_chart && chart_value_valid) {
               for (int i = 0; i < 24; i++) {
-                chart_points[i] = chart_point;
+                chart_values[i] = profit_percent;
               }
             } else if (restored_chart && chart_value_valid) {
-              chart_points[23] = chart_point;
+              chart_values[23] = profit_percent;
             }
             if (restored_chart || chart_value_valid) {
-              lv_obj_invalidate(id(xtb_chart_area));
-              lv_obj_invalidate(id(xtb_profit_chart));
-              for (int i = 0; i < 24; i++) {
-                lv_chart_set_value_by_id(id(xtb_profit_chart), id(xtb_profit_series), i, chart_points[i]);
-              }
               if (chart_value_valid) {
                 save_chart_history();
               }
               chart_seeded = true;
               last_chart_minute = minute_key;
-              lv_chart_refresh(id(xtb_profit_chart));
-              lv_obj_invalidate(id(xtb_profit_chart));
-              lv_obj_invalidate(id(xtb_chart_area));
+              render_chart();
             }
-          } else if (chart_value_valid && minute_key >= 0 && minute_key != last_chart_minute) {
-            lv_obj_invalidate(id(xtb_chart_area));
-            lv_obj_invalidate(id(xtb_profit_chart));
-            for (int i = 0; i < 23; i++) {
-              chart_points[i] = chart_points[i + 1];
+          } else if (chart_value_valid) {
+            if (minute_key >= 0 && minute_key != last_chart_minute) {
+              for (int i = 0; i < 23; i++) {
+                chart_values[i] = chart_values[i + 1];
+              }
             }
-            chart_points[23] = chart_point;
+            chart_values[23] = profit_percent;
             save_chart_history();
-            lv_chart_set_next_value(id(xtb_profit_chart), id(xtb_profit_series), chart_point);
             last_chart_minute = minute_key;
-            lv_chart_refresh(id(xtb_profit_chart));
-            lv_obj_invalidate(id(xtb_profit_chart));
-            lv_obj_invalidate(id(xtb_chart_area));
+            render_chart();
+          } else if (chart_seeded) {
+            render_chart();
           }
 
           static bool fan_initialized = false;
@@ -2146,19 +2251,27 @@ script:
 
           lv_obj_t *rows[] = {
             id(position_row_0), id(position_row_1), id(position_row_2), id(position_row_3), id(position_row_4),
-            id(position_row_5), id(position_row_6), id(position_row_7), id(position_row_8), id(position_row_9)
+            id(position_row_5), id(position_row_6), id(position_row_7), id(position_row_8), id(position_row_9),
+            extra_position_rows[0], extra_position_rows[1], extra_position_rows[2], extra_position_rows[3], extra_position_rows[4],
+            extra_position_rows[5], extra_position_rows[6], extra_position_rows[7], extra_position_rows[8], extra_position_rows[9]
           };
           lv_obj_t *names[] = {
             id(position_name_0), id(position_name_1), id(position_name_2), id(position_name_3), id(position_name_4),
-            id(position_name_5), id(position_name_6), id(position_name_7), id(position_name_8), id(position_name_9)
+            id(position_name_5), id(position_name_6), id(position_name_7), id(position_name_8), id(position_name_9),
+            extra_position_names[0], extra_position_names[1], extra_position_names[2], extra_position_names[3], extra_position_names[4],
+            extra_position_names[5], extra_position_names[6], extra_position_names[7], extra_position_names[8], extra_position_names[9]
           };
           lv_obj_t *daily[] = {
             id(position_daily_0), id(position_daily_1), id(position_daily_2), id(position_daily_3), id(position_daily_4),
-            id(position_daily_5), id(position_daily_6), id(position_daily_7), id(position_daily_8), id(position_daily_9)
+            id(position_daily_5), id(position_daily_6), id(position_daily_7), id(position_daily_8), id(position_daily_9),
+            extra_position_daily[0], extra_position_daily[1], extra_position_daily[2], extra_position_daily[3], extra_position_daily[4],
+            extra_position_daily[5], extra_position_daily[6], extra_position_daily[7], extra_position_daily[8], extra_position_daily[9]
           };
           lv_obj_t *profits[] = {
             id(position_profit_0), id(position_profit_1), id(position_profit_2), id(position_profit_3), id(position_profit_4),
-            id(position_profit_5), id(position_profit_6), id(position_profit_7), id(position_profit_8), id(position_profit_9)
+            id(position_profit_5), id(position_profit_6), id(position_profit_7), id(position_profit_8), id(position_profit_9),
+            extra_position_profits[0], extra_position_profits[1], extra_position_profits[2], extra_position_profits[3], extra_position_profits[4],
+            extra_position_profits[5], extra_position_profits[6], extra_position_profits[7], extra_position_profits[8], extra_position_profits[9]
           };
 
           std::string row_names[] = {
@@ -2178,11 +2291,11 @@ script:
           const bool use_deskhub_rows = valid_text(deskhub_rows);
           const bool use_positions_json = valid_text(positions);
 
-          std::string display_names[10];
-          float display_daily[10];
-          float display_profits[10];
+          std::string display_names[MAX_POSITION_ROWS];
+          float display_daily[MAX_POSITION_ROWS];
+          float display_profits[MAX_POSITION_ROWS];
           int visible = 0;
-          for (int i = 0; i < 10; i++) {
+          for (int i = 0; i < MAX_POSITION_ROWS; i++) {
             std::string name;
             float daily_change = NAN;
             float row_profit = NAN;
@@ -2203,7 +2316,7 @@ script:
                 row_profit = number_from(item, "profit_loss", NAN);
                 if (isnan(row_profit)) row_profit = number_from(item, "profit_net", NAN);
               }
-            } else {
+            } else if (i < BASE_POSITION_ROWS) {
               name = row_names[i];
               daily_change = row_daily[i];
               row_profit = row_profits[i];
@@ -2217,6 +2330,7 @@ script:
             display_daily[visible] = daily_change;
             display_profits[visible] = row_profit;
             visible++;
+            if (visible >= MAX_POSITION_ROWS) break;
           }
 
           for (int i = 0; i < visible - 1; i++) {
@@ -2231,7 +2345,7 @@ script:
             }
           }
 
-          for (int i = 0; i < 10; i++) {
+          for (int i = 0; i < MAX_POSITION_ROWS; i++) {
             if (i < visible) {
               set_label(names[i], display_names[i]);
               set_label(daily[i], percent(display_daily[i]));
@@ -2258,7 +2372,7 @@ script:
             set_label(id(position_daily_0), "");
             set_label(id(position_profit_0), "");
             lv_obj_clear_flag(id(position_row_0), LV_OBJ_FLAG_HIDDEN);
-            for (int i = 1; i < 10; i++) lv_obj_add_flag(rows[i], LV_OBJ_FLAG_HIDDEN);
+            for (int i = 1; i < MAX_POSITION_ROWS; i++) lv_obj_add_flag(rows[i], LV_OBJ_FLAG_HIDDEN);
           }
 
           static bool first_render = true;
