@@ -106,7 +106,7 @@ void T547::eink_off_() {
   ESP_LOGV(TAG, "Eink off called");
   if (panel_on_ == 0)
     return;
-  epd_poweroff();
+  epd_poweroff_all();
   panel_on_ = 0;
 }
 
@@ -224,7 +224,7 @@ void T547::display_full_() {
   epd_poweron();
   epd_clear();
   epd_draw_grayscale_image(epd_full_screen(), this->buffer_);
-  epd_poweroff();
+  epd_poweroff_all();
   memcpy(this->previous_buffer_, this->buffer_, this->get_buffer_length_());
   this->sync_mono_state_from_buffer_();
   this->first_update_ = false;
@@ -246,7 +246,7 @@ void T547::clean() {
   if (this->mono_state_buffer_ != nullptr) {
     this->sync_mono_state_from_buffer_();
   }
-  epd_poweroff();
+  epd_poweroff_all();
 
   this->first_update_ = false;
   this->update_count_ = 0;
@@ -260,7 +260,7 @@ void T547::display_partial_(Rect_t area) {
     epd_clear_area_cycles(area, this->partial_clear_cycles_, 25);
   }
   epd_draw_grayscale_image(area, this->partial_buffer_);
-  epd_poweroff();
+  epd_poweroff_all();
   memcpy(this->previous_buffer_, this->buffer_, this->get_buffer_length_());
   this->update_count_++;
 }
