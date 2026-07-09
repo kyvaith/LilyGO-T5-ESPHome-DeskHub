@@ -30,6 +30,7 @@
  * @brief number of bytes needed for one line of EPD pixel data.
  */
 #define EPD_LINE_BYTES EPD_WIDTH / 4
+#define EPD_OUTPUT_LINE_BYTES (EPD_WIDTH + 32) / 4
 
 #define CLEAR_BYTE 0B10101010
 #define DARK_BYTE 0B01010101
@@ -168,7 +169,7 @@ void epd_init()
 
 void epd_push_pixels(Rect_t area, int16_t time, int32_t color)
 {
-    uint8_t row[EPD_LINE_BYTES] = { 0 };
+    uint8_t row[EPD_OUTPUT_LINE_BYTES] = { 0 };
 
     for (uint32_t i = 0; i < area.width; i++)
     {
@@ -191,9 +192,9 @@ void epd_push_pixels(Rect_t area, int16_t time, int32_t color)
         else if (i == area.y)
         {
             epd_switch_buffer();
-            memcpy(epd_get_current_buffer(), row, EPD_LINE_BYTES);
+            memcpy(epd_get_current_buffer(), row, EPD_OUTPUT_LINE_BYTES);
             epd_switch_buffer();
-            memcpy(epd_get_current_buffer(), row, EPD_LINE_BYTES);
+            memcpy(epd_get_current_buffer(), row, EPD_OUTPUT_LINE_BYTES);
 
             write_row(time * 10);
             // load nop row if done with area
@@ -280,6 +281,7 @@ void IRAM_ATTR calc_epd_input_4bpp(uint32_t *line_data, uint8_t *epd_input,
 #endif
         wide_epd_input[j] = pixel;
     }
+    memset(epd_input + EPD_LINE_BYTES, 0, EPD_OUTPUT_LINE_BYTES - EPD_LINE_BYTES);
 }
 
 
@@ -296,6 +298,7 @@ void IRAM_ATTR calc_epd_input_1bpp(uint8_t *line_data, uint8_t *epd_input,
         uint8_t v2 = *(line_data++);
         wide_epd_input[j] = (lut_1bpp[v1] << 16) | lut_1bpp[v2];
     }
+    memset(epd_input + EPD_LINE_BYTES, 0, EPD_OUTPUT_LINE_BYTES - EPD_LINE_BYTES);
 }
 
 
@@ -876,9 +879,9 @@ static void skip_row(uint8_t pipeline_finish_time)
     if (skipping == 0)
     {
         epd_switch_buffer();
-        memset(epd_get_current_buffer(), 0, EPD_LINE_BYTES);
+        memset(epd_get_current_buffer(), 0, EPD_OUTPUT_LINE_BYTES);
         epd_switch_buffer();
-        memset(epd_get_current_buffer(), 0, EPD_LINE_BYTES);
+        memset(epd_get_current_buffer(), 0, EPD_OUTPUT_LINE_BYTES);
         epd_output_row(pipeline_finish_time);
         // avoid tainting of following rows by
         // allowing residual charge to dissipate
@@ -904,7 +907,7 @@ static void skip_row(uint8_t pipeline_finish_time)
 
 static void reorder_line_buffer(uint32_t *line_data)
 {
-    for (uint32_t i = 0; i < EPD_LINE_BYTES / 4; i++)
+    for (uint32_t i = 0; i < EPD_OUTPUT_LINE_BYTES / 4; i++)
     {
         uint32_t val = *line_data;
         *(line_data++) = val >> 16 | ((val & 0x0000FFFF) << 16);

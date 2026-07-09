@@ -2,6 +2,10 @@ esphome:
   name: ${name}
   friendly_name: ${friendly_name}
   build_path: !env_var ESPHOME_BUILD_PATH .b
+  on_boot:
+    priority: 600
+    then:
+      - bm8563.read_time: rtc_time
   platformio_options:
     upload_speed: 921600
     monitor_speed: 115200
@@ -33,9 +37,16 @@ psram:
 
 logger:
   level: INFO
+  baud_rate: 0
 
 api:
   homeassistant_services: true
+  on_client_connected:
+    then:
+      - delay: 3s
+      - script.execute: fetch_weather_forecast
+      - delay: 250ms
+      - script.execute: refresh_dashboard
 
 ota:
   - platform: esphome
@@ -59,6 +70,14 @@ i2c:
   frequency: 100kHz
 
 time:
+  - platform: bm8563
+    id: rtc_time
+    i2c_id: touch_bus
+    timezone: Europe/Warsaw
+
   - platform: homeassistant
     id: ha_time
     timezone: Europe/Warsaw
+    on_time_sync:
+      then:
+        - bm8563.write_time: rtc_time

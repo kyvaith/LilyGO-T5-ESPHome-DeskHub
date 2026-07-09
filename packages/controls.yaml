@@ -3,9 +3,29 @@ touchscreen:
     id: touch_panel
     interrupt_pin: GPIO47
     display: epaper_display
+    update_interval: 15ms
+    touch_timeout: 250ms
+    calibration:
+      x_min: 0
+      x_max: 960
+      y_min: 0
+      y_max: 540
+    transform:
+      swap_xy: true
+      mirror_y: true
     on_touch:
       - lambda: |-
-          ESP_LOGI("touch", "Touch x=%d y=%d", touch.x, touch.y);
+          const bool in_fan = touch.x >= 218 && touch.x <= 356 && touch.y >= 462 && touch.y <= 512;
+          const bool in_list = touch.x >= 404 && touch.x <= 936 && touch.y >= 372 && touch.y <= 520;
+          ESP_LOGI("touch", "Touch raw=(%d,%d) calc=(%d,%d) fan=%s list=%s",
+                   touch.x_raw, touch.y_raw, touch.x, touch.y,
+                   in_fan ? "yes" : "no", in_list ? "yes" : "no");
+    on_release:
+      - lambda: |-
+          ESP_LOGI("touch", "Touch release");
+      - component.update: desk_lvgl
+      - delay: 80ms
+      - component.update: epaper_display
 
 binary_sensor:
   - platform: gpio
@@ -29,6 +49,14 @@ button:
   - platform: template
     name: "${friendly_name} Refresh Display"
     on_press:
+      - script.execute: refresh_dashboard
+
+  - platform: template
+    name: "${friendly_name} Clean Display"
+    on_press:
+      - lambda: |-
+          id(epaper_display).clean();
+      - delay: 500ms
       - script.execute: refresh_dashboard
 
   - platform: restart

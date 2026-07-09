@@ -72,16 +72,15 @@ class T547 : public PollingComponent, public display::DisplayBuffer {
   void display_full_();
   void display_partial_(Rect_t area);
   bool display_fast_mono_(Rect_t area);
-  bool display_fast_mono_phase_(Rect_t area, bool drive_black, uint8_t passes, uint16_t drive_time);
-  bool build_fast_mono_row_(Rect_t area, int y, bool drive_black, uint8_t *row);
+  bool display_fast_mono_frame_(uint16_t drive_time, uint8_t field, bool force_all_pixels);
+  bool build_fast_mono_row_(int y, uint8_t *row, uint8_t field, bool force_all_pixels);
   bool mono_pixel_is_black_(int x, int y);
   bool previous_mono_pixel_is_black_(int x, int y);
   bool buffer_mono_pixel_is_black_(const uint8_t *buffer, int x, int y);
   uint8_t required_mono_passes_(bool target_black) const;
   size_t get_mono_state_length_();
   void sync_mono_state_from_buffer_();
-  void output_mono_noop_row_(uint32_t pipeline_finish_time);
-  void reorder_mono_line_(uint32_t *line_data);
+  static uint8_t reverse_epd_pixel_pairs_(uint8_t value);
   bool allocate_psram_buffer_(uint8_t **target, size_t size, const char *name);
 
 

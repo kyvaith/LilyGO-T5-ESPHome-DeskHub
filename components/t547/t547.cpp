@@ -1,5 +1,6 @@
 #include "t547.h"
 #include "ed047tc1.h"
+#include "i2s_data_bus.h"
 #include "esphome/core/log.h"
 #include "esphome/core/application.h"
 #include "esphome/core/helpers.h"
@@ -14,10 +15,17 @@ namespace esphome {
 namespace t547 {
 
 static const char *const TAG = "t547";
-static constexpr int EPD_FAST_LINE_BYTES = EPD_WIDTH / 4;
+static constexpr int EPD_LINE_PAD = 8;
+static constexpr int EPD_FAST_LINE_BYTES = EPD_WIDTH / 4 + EPD_LINE_PAD;
+static constexpr int PAPERBOY_FIELDS = 4;
+static constexpr uint8_t PAPERBOY_COUNTER_SATURATED = 0x90;
 static constexpr uint8_t FAST_MONO_TARGET_BLACK = 0x01;
-static constexpr uint8_t FAST_MONO_COMMAND_DARK = 0x01;
-static constexpr uint8_t FAST_MONO_COMMAND_LIGHT = 0x02;
+static constexpr uint8_t PAPERBOY_RESET_COUNTER_MASK[4] = {
+    0xFC,  // both pixels already target the requested color
+    0xE0,  // lower pixel changed
+    0x1C,  // higher pixel changed
+    0x00,  // both pixels changed
+};
 
 void T547::setup() {
   ESP_LOGV(TAG, "Initialize called");
@@ -51,7 +59,7 @@ void T547::setup() {
   memset(this->previous_buffer_, 0xFF, buffer_size);
   memset(this->partial_buffer_, 0xFF, buffer_size);
   if (this->mono_state_buffer_ != nullptr) {
-    memset(this->mono_state_buffer_, this->fast_mono_clear_passes_ << 1, mono_state_size);
+    memset(this->mono_state_buffer_, 0, mono_state_size);
   }
   ESP_LOGV(TAG, "Initialize complete");
 }
@@ -62,7 +70,7 @@ size_t T547::get_buffer_length_() {
 }
 
 size_t T547::get_mono_state_length_() {
-    return this->get_width_internal() * this->get_height_internal();
+    return this->get_width_internal() * this->get_height_internal() / 2;
 }
 
 bool T547::allocate_psram_buffer_(uint8_t **target, size_t size, const char *name) {
@@ -223,6 +231,28 @@ void T547::display_full_() {
   this->update_count_ = 1;
 }
 
+void T547::clean() {
+  if (this->buffer_ == nullptr || this->previous_buffer_ == nullptr) {
+    ESP_LOGW(TAG, "Display clean skipped, buffers are not allocated");
+    return;
+  }
+
+  const size_t buffer_size = this->get_buffer_length_();
+  memset(this->buffer_, 0xFF, buffer_size);
+  memset(this->previous_buffer_, 0xFF, buffer_size);
+
+  epd_poweron();
+  epd_clear();
+  if (this->mono_state_buffer_ != nullptr) {
+    this->sync_mono_state_from_buffer_();
+  }
+  epd_poweroff();
+
+  this->first_update_ = false;
+  this->update_count_ = 0;
+  ESP_LOGI(TAG, "Display cleaned");
+}
+
 void T547::display_partial_(Rect_t area) {
   this->copy_area_to_partial_(area);
   epd_poweron();
@@ -254,7 +284,7 @@ bool T547::previous_mono_pixel_is_black_(int x, int y) {
 }
 
 uint8_t T547::required_mono_passes_(bool target_black) const {
-  return target_black ? this->fast_mono_passes_ : this->fast_mono_clear_passes_;
+  return PAPERBOY_FIELDS;
 }
 
 void T547::sync_mono_state_from_buffer_() {
@@ -263,116 +293,132 @@ void T547::sync_mono_state_from_buffer_() {
   }
   const int width = this->get_width_internal();
   const int height = this->get_height_internal();
+  const int state_stride = width / 2;
   for (int y = 0; y < height; y++) {
-    for (int x = 0; x < width; x++) {
-      const bool black = this->mono_pixel_is_black_(x, y);
-      const uint8_t saturated = this->required_mono_passes_(black) << 1;
-      this->mono_state_buffer_[y * width + x] = saturated | (black ? FAST_MONO_TARGET_BLACK : 0);
+    uint8_t *state_row = this->mono_state_buffer_ + y * state_stride;
+    for (int x = 0; x < width; x += 2) {
+      uint8_t colors = 0;
+      if (this->mono_pixel_is_black_(x, y)) {
+        colors |= 0x02;
+      }
+      if (this->mono_pixel_is_black_(x + 1, y)) {
+        colors |= FAST_MONO_TARGET_BLACK;
+      }
+      state_row[x / 2] = PAPERBOY_COUNTER_SATURATED | colors;
     }
   }
 }
 
-void T547::reorder_mono_line_(uint32_t *line_data) {
-  for (uint32_t i = 0; i < EPD_FAST_LINE_BYTES / 4; i++) {
-    uint32_t val = *line_data;
-    *(line_data++) = val >> 16 | ((val & 0x0000FFFF) << 16);
-  }
+uint8_t T547::reverse_epd_pixel_pairs_(uint8_t value) {
+  return ((value & 0x03u) << 6) | ((value & 0x0Cu) << 2) | ((value & 0x30u) >> 2) |
+         ((value & 0xC0u) >> 6);
 }
 
-void T547::output_mono_noop_row_(uint32_t pipeline_finish_time) {
-  if (this->mono_skipping_ == 0) {
-    epd_switch_buffer();
-    memset(epd_get_current_buffer(), 0, EPD_FAST_LINE_BYTES);
-    epd_switch_buffer();
-    memset(epd_get_current_buffer(), 0, EPD_FAST_LINE_BYTES);
-    epd_output_row(pipeline_finish_time);
-  } else if (this->mono_skipping_ < 2) {
-    epd_output_row(10);
-  } else {
-    epd_skip();
-  }
-  this->mono_skipping_++;
-}
-
-bool T547::build_fast_mono_row_(Rect_t area, int y, bool drive_black, uint8_t *row) {
+bool T547::build_fast_mono_row_(int y, uint8_t *row, uint8_t field, bool force_all_pixels) {
   memset(row, 0, EPD_FAST_LINE_BYTES);
-
-  const int width = this->get_width_internal();
-  const int start_x = std::max(0, static_cast<int>(area.x));
-  const int end_x = std::min(width, static_cast<int>(area.x + area.width));
   bool any = false;
 
-  for (int x = start_x; x < end_x; x++) {
-    const bool target_black = this->mono_pixel_is_black_(x, y);
-    const bool previous_buffer_black = this->previous_mono_pixel_is_black_(x, y);
+  const int width = this->get_width_internal();
+  const int state_stride = width / 2;
+  uint8_t *state_row = this->mono_state_buffer_ + y * state_stride;
 
-    if (target_black == previous_buffer_black || target_black != drive_black) {
-      continue;
+  for (int x = 0; x < width; x += 4) {
+    uint8_t out = 0;
+
+    for (int pair = 0; pair < 2; pair++) {
+      const int px = x + pair * 2;
+      out <<= 4;
+
+      uint8_t driving_dir = 0;
+      if (this->mono_pixel_is_black_(px, y)) {
+        driving_dir |= 0x02;
+      }
+      if (this->mono_pixel_is_black_(px + 1, y)) {
+        driving_dir |= 0x01;
+      }
+
+      uint8_t state = state_row[px / 2];
+      const uint8_t pixel_diff = (state ^ driving_dir) & 0x03;
+      state &= PAPERBOY_RESET_COUNTER_MASK[pixel_diff];
+      state |= driving_dir;
+
+      const bool high_was_black = this->previous_mono_pixel_is_black_(px, y);
+      const bool high_is_black = this->mono_pixel_is_black_(px, y);
+      const bool high_changed_to_black = !high_was_black && high_is_black;
+      const bool high_changed_to_white = high_was_black && !high_is_black;
+      const bool high_changed = (high_changed_to_black && field < this->fast_mono_passes_) ||
+                                (high_changed_to_white && field < this->fast_mono_clear_passes_);
+
+      const bool low_was_black = this->previous_mono_pixel_is_black_(px + 1, y);
+      const bool low_is_black = this->mono_pixel_is_black_(px + 1, y);
+      const bool low_changed_to_black = !low_was_black && low_is_black;
+      const bool low_changed_to_white = low_was_black && !low_is_black;
+      const bool low_changed = (low_changed_to_black && field < this->fast_mono_passes_) ||
+                               (low_changed_to_white && field < this->fast_mono_clear_passes_);
+
+      if ((state & 0x80) == 0 || high_changed || force_all_pixels) {
+        out |= (driving_dir & 0x02) ? 0x04 : 0x08;
+      }
+      if ((state & 0x10) == 0 || low_changed || force_all_pixels) {
+        out |= (driving_dir & 0x01) ? 0x01 : 0x02;
+      }
+
+      const uint8_t counter_increment = ((~state) >> 2) & 0x24;
+      state += counter_increment;
+      state_row[px / 2] = state;
     }
 
-    const uint8_t command = drive_black ? FAST_MONO_COMMAND_DARK : FAST_MONO_COMMAND_LIGHT;
-    row[x / 4] |= command << (2 * (x & 0x03));
-    any = true;
+    out = T547::reverse_epd_pixel_pairs_(out);
+    row[x / 4] = out;
+    any = any || out != 0;
   }
 
-  if (any) {
-    this->reorder_mono_line_(reinterpret_cast<uint32_t *>(row));
-  }
   return any;
 }
 
-bool T547::display_fast_mono_phase_(Rect_t area, bool drive_black, uint8_t passes, uint16_t drive_time) {
+bool T547::display_fast_mono_frame_(uint16_t drive_time, uint8_t field, bool force_all_pixels) {
   uint8_t row[EPD_FAST_LINE_BYTES];
   bool any_pixel_driven = false;
 
-  for (uint8_t pass = 0; pass < passes; pass++) {
-    bool any_in_pass = false;
-    this->mono_skipping_ = 0;
-    epd_start_frame();
+  epd_start_frame();
 
-    for (int y = 0; y < this->get_height_internal(); y++) {
-      if (y < area.y || y >= area.y + area.height) {
-        this->output_mono_noop_row_(drive_time);
-        continue;
-      }
+  for (int y = 0; y < this->get_height_internal(); y++) {
+    const bool row_driven = this->build_fast_mono_row_(y, row, field, force_all_pixels);
+    any_pixel_driven = any_pixel_driven || row_driven;
 
-      if (this->build_fast_mono_row_(area, y, drive_black, row)) {
-        if (this->mono_skipping_ > 0) {
-          epd_switch_buffer();
-          memcpy(epd_get_current_buffer(), row, EPD_FAST_LINE_BYTES);
-          epd_switch_buffer();
-        }
-        memcpy(epd_get_current_buffer(), row, EPD_FAST_LINE_BYTES);
-        this->mono_skipping_ = 0;
-        epd_output_row(drive_time);
-        any_in_pass = true;
-        any_pixel_driven = true;
-      } else {
-        this->output_mono_noop_row_(drive_time);
-      }
-    }
-
-    if (this->mono_skipping_ == 0) {
-      epd_output_row(drive_time);
-    }
-    epd_end_frame();
-    App.feed_wdt();
-    delay(1);
-
-    if (!any_in_pass) {
-      break;
+    memcpy(epd_get_current_buffer(), row, EPD_FAST_LINE_BYTES);
+    epd_output_row(drive_time);
+    if ((y & 0x0F) == 0x0F) {
+      App.feed_wdt();
     }
   }
+
+  memset(row, 0, EPD_FAST_LINE_BYTES);
+  memcpy(epd_get_current_buffer(), row, EPD_FAST_LINE_BYTES);
+  epd_output_row(drive_time);
+  while (i2s_is_busy()) {
+  }
+  epd_end_frame();
   return any_pixel_driven;
 }
 
 bool T547::display_fast_mono_(Rect_t area) {
+  (void) area;
   epd_poweron();
-  const bool cleared = this->display_fast_mono_phase_(area, false, this->fast_mono_clear_passes_,
-                                                     this->fast_mono_clear_time_);
-  const bool darkened = this->display_fast_mono_phase_(area, true, this->fast_mono_passes_, this->fast_mono_time_);
-  epd_poweroff();
-  return cleared || darkened;
+  bool any_pixel_driven = false;
+  const uint8_t field_count = std::max<uint8_t>(PAPERBOY_FIELDS,
+                                                std::max(this->fast_mono_passes_, this->fast_mono_clear_passes_));
+  for (uint8_t field = 0; field < field_count; field++) {
+    const bool any_in_field = this->display_fast_mono_frame_(this->fast_mono_time_, field, false);
+    any_pixel_driven = any_pixel_driven || any_in_field;
+    App.feed_wdt();
+    delay(1);
+    if (!any_in_field) {
+      break;
+    }
+  }
+  epd_poweroff_all();
+  return any_pixel_driven;
 }
 
 }  // namespace T547
