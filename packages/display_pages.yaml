@@ -918,7 +918,7 @@ lvgl:
                         type: LINE
                         point_count: 24
                         update_mode: SHIFT
-                        div_line_count_hor: 5
+                        div_line_count_hor: 4
                         div_line_count_ver: 1
                         main:
                           pad_left: 0
@@ -938,9 +938,20 @@ lvgl:
                           bg_opa: transp
                           line_width: 0
                           border_width: 0
+                        cursor:
+                          width: 0
+                          height: 0
+                          line_width: 1
+                          line_dash_width: 4
+                          line_dash_gap: 4
+                          line_opa: 60%
                         axis_primary_y:
                           min_value: 0
                           max_value: 100
+                        cursors:
+                          - id: xtb_zero_cursor
+                            color: 0x777777
+                            direction: HOR
                         series:
                           - id: xtb_profit_series
                             color: 0x000000
@@ -974,7 +985,7 @@ lvgl:
                     - label:
                         id: xtb_axis_label_upper_mid
                         x: 0
-                        y: 27
+                        y: 33
                         width: 42
                         height: 14
                         text: "+10%"
@@ -986,7 +997,7 @@ lvgl:
                     - label:
                         id: xtb_axis_label_zero
                         x: 0
-                        y: 46
+                        y: 59
                         width: 42
                         height: 14
                         text: "0%"
@@ -1792,6 +1803,12 @@ script:
           lv_obj_set_style_pad_left(id(xtb_profit_chart), 0, LV_PART_MAIN);
           lv_obj_set_style_line_width(id(xtb_profit_chart), 2, LV_PART_ITEMS);
           lv_obj_set_style_line_color(id(xtb_profit_chart), lv_color_hex(0x000000), LV_PART_ITEMS);
+          lv_obj_set_style_width(id(xtb_profit_chart), 0, LV_PART_CURSOR);
+          lv_obj_set_style_height(id(xtb_profit_chart), 0, LV_PART_CURSOR);
+          lv_obj_set_style_line_width(id(xtb_profit_chart), 1, LV_PART_CURSOR);
+          lv_obj_set_style_line_dash_width(id(xtb_profit_chart), 4, LV_PART_CURSOR);
+          lv_obj_set_style_line_dash_gap(id(xtb_profit_chart), 4, LV_PART_CURSOR);
+          lv_obj_set_style_line_opa(id(xtb_profit_chart), LV_OPA_60, LV_PART_CURSOR);
 
           lv_obj_add_flag(id(positions_list), LV_OBJ_FLAG_SCROLLABLE);
           lv_obj_set_scroll_dir(id(positions_list), LV_DIR_VER);
@@ -2170,21 +2187,32 @@ script:
           };
 
           auto render_chart = [&]() {
-            float required_limit = 20.0f;
+            float required_top = 20.0f;
             for (int i = 0; i < 24; i++) {
               if (isnan(chart_values[i])) continue;
-              float abs_value = fabsf(chart_values[i]);
-              if (abs_value > required_limit) required_limit = abs_value;
+              if (chart_values[i] > required_top) required_top = chart_values[i];
+              if (chart_values[i] < -required_top / 2.0f) required_top = -2.0f * chart_values[i];
             }
-            float chart_top = ceilf(required_limit / 10.0f) * 10.0f;
+            float chart_top = ceilf(required_top / 10.0f) * 10.0f;
             if (chart_top < 20.0f) chart_top = 20.0f;
-            float chart_bottom = -chart_top;
+            float chart_bottom = -chart_top / 2.0f;
             const float chart_span = chart_top - chart_bottom;
 
             set_label(id(xtb_axis_label_top), axis_percent(chart_top));
-            set_label(id(xtb_axis_label_upper_mid), axis_percent(chart_top / 2.0f));
-            set_label(id(xtb_axis_label_zero), "0%");
+            set_label(id(xtb_axis_label_upper_mid), axis_percent(chart_top - chart_span / 3.0f));
+            set_label(id(xtb_axis_label_zero), axis_percent(chart_top - chart_span * 2.0f / 3.0f));
             set_label(id(xtb_axis_label_bottom), axis_percent(chart_bottom));
+
+            lv_obj_update_layout(id(xtb_profit_chart));
+            int32_t pad_top = lv_obj_get_style_pad_top(id(xtb_profit_chart), LV_PART_MAIN);
+            int32_t pad_bottom = lv_obj_get_style_pad_bottom(id(xtb_profit_chart), LV_PART_MAIN);
+            int32_t chart_h = lv_obj_get_height(id(xtb_profit_chart));
+            int32_t plot_h = std::max<int32_t>(1, chart_h - pad_top - pad_bottom);
+            int32_t zero_y = pad_top + (int32_t) roundf((chart_top * plot_h) / chart_span);
+            lv_point_t zero_point;
+            zero_point.x = 0;
+            zero_point.y = zero_y;
+            lv_chart_set_cursor_pos(id(xtb_profit_chart), id(xtb_zero_cursor), &zero_point);
 
             lv_obj_invalidate(id(xtb_chart_area));
             lv_obj_invalidate(id(xtb_profit_chart));
