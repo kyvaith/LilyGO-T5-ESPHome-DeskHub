@@ -8,6 +8,7 @@
 #ifdef USE_ESP32_FRAMEWORK_ARDUINO
 
 #include <esp_sleep.h>
+#include <esp_system.h>
 #include <nvs.h>
 #include <nvs_flash.h>
 #include <esp32-hal-gpio.h>
@@ -97,7 +98,7 @@ void T547::setup() {
   if (this->mono_state_buffer_ != nullptr) {
     memset(this->mono_state_buffer_, 0, mono_state_size);
   }
-  if (t547_flash_screen_preserve_armed() || esp_sleep_get_wakeup_cause() != ESP_SLEEP_WAKEUP_UNDEFINED) {
+  if (t547_flash_screen_preserve_armed() || esp_reset_reason() == ESP_RST_DEEPSLEEP) {
     this->suspend_updates_for_preserved_screen();
   }
   ESP_LOGV(TAG, "Initialize complete");

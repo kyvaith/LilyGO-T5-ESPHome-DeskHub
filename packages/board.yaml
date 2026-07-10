@@ -5,9 +5,21 @@ esphome:
   includes:
     - src/wake_guard.h
   on_boot:
-    priority: 600
+    priority: -100
     then:
       - bm8563.read_time: rtc_time
+      - if:
+          condition:
+            lambda: return id(battery_sleep_enabled);
+          then:
+            - switch.template.publish:
+                id: battery_sleep_mode
+                state: ON
+            - script.execute: schedule_battery_sleep
+          else:
+            - switch.template.publish:
+                id: battery_sleep_mode
+                state: OFF
   platformio_options:
     upload_speed: 921600
     monitor_speed: 115200

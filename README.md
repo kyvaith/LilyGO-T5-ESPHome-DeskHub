@@ -147,14 +147,15 @@ Assistant service calls remain available. For battery use, enable
 
 When battery sleep mode is enabled, the device stays awake for
 `battery_awake_duration` after boot, refreshes the dashboard, then enters ESP32
-deep sleep for `battery_sleep_duration` through a direct ESP sleep call. The
-firmware intentionally keeps the e-paper image intact before sleep and suppresses
-the first automatic redraw after a timer wake, so the display does not perform a
-full flashing reload on every wake cycle.
+light sleep for `battery_sleep_duration`. Light sleep keeps RAM, LVGL state and
+the e-paper framebuffer alive, so the dashboard resumes without the full reboot
+behavior that ESP32 deep sleep always causes.
 
-The LILYGO EPD47 S3 README lists the board at roughly 90-230+ mA while awake
-with WiFi on and about 380 uA in sleep. Week-long battery runtime therefore
-requires this sleep mode; WiFi-only power saving is not enough.
+Deep sleep is still exposed as `LilyGO T5 DeskHub Deep Sleep Test 30s` for
+diagnostics, but it is intentionally not used by the normal battery mode. It
+minimizes power better than light sleep, but the ESP32 wakes from deep sleep by
+booting the application again, which is a poor fit for this always-visible desk
+dashboard.
 
 ## Refresh Strategy
 

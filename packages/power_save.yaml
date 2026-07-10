@@ -18,6 +18,14 @@ switch:
       - globals.set:
           id: battery_sleep_enabled
           value: "true"
+      - globals.set:
+          id: screen_preserve_armed
+          value: "false"
+      - lambda: |-
+          t5_clear_screen_preserving_sleep();
+          t5_set_flash_screen_preserve_armed(false);
+          id(epaper_display).resume_updates();
+          t5_sync_preferences();
       - switch.template.publish:
           id: battery_sleep_mode
           state: ON
@@ -33,6 +41,8 @@ switch:
       - globals.set:
           id: battery_sleep_enabled
           value: "false"
+      - lambda: |-
+          t5_sync_preferences();
       - switch.template.publish:
           id: battery_sleep_mode
           state: OFF
@@ -45,7 +55,7 @@ button:
       - script.execute: enter_battery_sleep
 
   - platform: template
-    name: "${friendly_name} Test Sleep 30s"
+    name: "${friendly_name} Deep Sleep Test 30s"
     icon: mdi:sleep
     on_press:
       - globals.set:
@@ -53,6 +63,19 @@ button:
           value: "true"
       - lambda: |-
           t5_enter_screen_preserving_deep_sleep(30000000ULL);
+
+  - platform: template
+    name: "${friendly_name} Light Sleep Test 30s"
+    icon: mdi:power-sleep
+    on_press:
+      - globals.set:
+          id: screen_preserve_armed
+          value: "false"
+      - lambda: |-
+          t5_clear_screen_preserving_sleep();
+          t5_set_flash_screen_preserve_armed(false);
+          id(epaper_display).resume_updates();
+          t5_enter_light_sleep(30000000ULL);
 
 script:
   - id: guarded_refresh_dashboard
@@ -80,6 +103,14 @@ script:
     then:
       - globals.set:
           id: screen_preserve_armed
-          value: "true"
+          value: "false"
       - lambda: |-
-          t5_enter_screen_preserving_deep_sleep(${battery_sleep_duration_us});
+          t5_clear_screen_preserving_sleep();
+          t5_set_flash_screen_preserve_armed(false);
+          id(epaper_display).resume_updates();
+          t5_enter_light_sleep(${battery_sleep_duration_us});
+      - if:
+          condition:
+            lambda: return id(battery_sleep_enabled);
+          then:
+            - script.execute: schedule_battery_sleep

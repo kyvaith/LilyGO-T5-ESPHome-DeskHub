@@ -87,7 +87,7 @@ static inline bool t5_set_flash_screen_preserve_armed(bool armed) {
 
 static inline bool t5_woke_from_screen_preserving_sleep() {
   return t5_preserve_screen_after_sleep || t5_flash_screen_preserve_armed() ||
-         esp_sleep_get_wakeup_cause() != ESP_SLEEP_WAKEUP_UNDEFINED;
+         esp_reset_reason() == ESP_RST_DEEPSLEEP;
 }
 
 static inline bool t5_allow_automatic_screen_refresh() {
@@ -200,4 +200,18 @@ static inline void t5_enter_screen_preserving_deep_sleep(uint64_t sleep_duration
   esp_sleep_disable_wakeup_source(ESP_SLEEP_WAKEUP_ALL);
   esp_sleep_enable_timer_wakeup(sleep_duration_us);
   esp_deep_sleep_start();
+}
+
+static inline bool t5_enter_light_sleep(uint64_t sleep_duration_us) {
+  ESP_LOGW("t5.wake", "Entering ESP light sleep for %llu us",
+           static_cast<unsigned long long>(sleep_duration_us));
+  esp_sleep_disable_wakeup_source(ESP_SLEEP_WAKEUP_ALL);
+  esp_sleep_enable_timer_wakeup(sleep_duration_us);
+  const esp_err_t err = esp_light_sleep_start();
+  if (err != ESP_OK) {
+    ESP_LOGW("t5.wake", "Light sleep failed: %s", esp_err_to_name(err));
+    return false;
+  }
+  ESP_LOGW("t5.wake", "Returned from ESP light sleep");
+  return true;
 }
