@@ -86,6 +86,10 @@ bool T547::allocate_psram_buffer_(uint8_t **target, size_t size, const char *nam
 }
 
 void T547::update() {
+  if (this->preserve_existing_screen_) {
+    ESP_LOGW(TAG, "Display update ignored while preserving retained e-paper image after sleep");
+    return;
+  }
   this->do_update_();
   this->display();
 }
@@ -124,7 +128,30 @@ void T547::poweroff_all() {
   panel_on_ = 0;
 }
 
+void T547::suspend_updates_for_preserved_screen() {
+  ESP_LOGW(TAG, "Suspending display updates to preserve retained e-paper image after sleep");
+  this->preserve_existing_screen_ = true;
+  this->first_update_ = false;
+}
+
+void T547::resume_updates() {
+  if (!this->preserve_existing_screen_) {
+    return;
+  }
+  ESP_LOGW(TAG, "Resuming display updates after preserved sleep image");
+  this->preserve_existing_screen_ = false;
+  this->first_update_ = false;
+  if (this->buffer_ != nullptr && this->previous_buffer_ != nullptr) {
+    memcpy(this->previous_buffer_, this->buffer_, this->get_buffer_length_());
+    this->sync_mono_state_from_buffer_();
+  }
+}
+
 void T547::display() {
+  if (this->preserve_existing_screen_) {
+    ESP_LOGW(TAG, "Display call ignored while preserving retained e-paper image after sleep");
+    return;
+  }
   ESP_LOGV(TAG, "Display called");
   uint32_t start_time = millis();
 

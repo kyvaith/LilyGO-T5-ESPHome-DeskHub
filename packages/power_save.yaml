@@ -3,6 +3,10 @@ globals:
     type: bool
     restore_value: true
     initial_value: "false"
+  - id: screen_preserve_armed
+    type: bool
+    restore_value: true
+    initial_value: "false"
 
 deep_sleep:
   id: battery_deep_sleep
@@ -22,8 +26,13 @@ switch:
           state: ON
       - script.execute: schedule_battery_sleep
     turn_off_action:
+      - globals.set:
+          id: screen_preserve_armed
+          value: "false"
       - lambda: |-
           t5_clear_screen_preserving_sleep();
+          id(epaper_display).resume_updates();
+          t5_sync_preferences();
       - globals.set:
           id: battery_sleep_enabled
           value: "false"
@@ -45,7 +54,7 @@ script:
       - if:
           condition:
             lambda: |-
-              return t5_allow_automatic_screen_refresh();
+              return !id(screen_preserve_armed) && t5_allow_automatic_screen_refresh();
           then:
             - script.execute: refresh_dashboard
 
@@ -62,8 +71,12 @@ script:
   - id: enter_battery_sleep
     mode: restart
     then:
+      - globals.set:
+          id: screen_preserve_armed
+          value: "true"
       - lambda: |-
           t5_mark_screen_preserving_sleep();
+          t5_sync_preferences();
           id(epaper_display).poweroff_all();
       - delay: 100ms
       - deep_sleep.enter:

@@ -50,7 +50,7 @@ api:
       - if:
           condition:
             lambda: |-
-              return t5_allow_automatic_screen_refresh();
+              return !id(screen_preserve_armed) && t5_allow_automatic_screen_refresh();
           then:
             - delay: 3s
             - script.execute: fetch_weather_forecast

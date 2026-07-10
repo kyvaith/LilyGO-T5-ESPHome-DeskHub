@@ -43,6 +43,8 @@ class T547 : public PollingComponent, public display::DisplayBuffer {
   void display();
   void clean();
   void poweroff_all();
+  void suspend_updates_for_preserved_screen();
+  void resume_updates();
   void update() override;
 
   void setup() override;
@@ -92,6 +94,7 @@ class T547 : public PollingComponent, public display::DisplayBuffer {
   bool fast_refresh_{true};
   bool fast_mono_{false};
   bool first_update_{true};
+  bool preserve_existing_screen_{false};
   uint32_t update_count_{0};
   uint32_t full_update_every_{24};
   uint8_t partial_clear_cycles_{1};

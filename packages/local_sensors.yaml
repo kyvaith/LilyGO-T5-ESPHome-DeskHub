@@ -63,3 +63,11 @@ text_sensor:
   - platform: version
     id: esphome_version_text
     name: "${friendly_name} ESPHome Version"
+
+  - platform: template
+    id: wake_reason_text
+    name: "${friendly_name} Wake Reason"
+    icon: mdi:power-cycle
+    update_interval: 30s
+    lambda: |-
+      return t5_boot_diagnostic(id(screen_preserve_armed));

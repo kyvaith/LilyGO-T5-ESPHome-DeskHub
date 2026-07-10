@@ -723,8 +723,13 @@ lvgl:
                                   data:
                                     entity_id: ${entity_fan}
                               - delay: 250ms
+                              - globals.set:
+                                  id: screen_preserve_armed
+                                  value: "false"
                               - lambda: |-
                                   t5_clear_screen_preserving_sleep();
+                                  id(epaper_display).resume_updates();
+                                  t5_sync_preferences();
                               - script.execute: refresh_dashboard
                         - id: fan_on_button
                           text: "ON"
@@ -740,8 +745,13 @@ lvgl:
                                   data:
                                     entity_id: ${entity_fan}
                               - delay: 250ms
+                              - globals.set:
+                                  id: screen_preserve_armed
+                                  value: "false"
                               - lambda: |-
                                   t5_clear_screen_preserving_sleep();
+                                  id(epaper_display).resume_updates();
+                                  t5_sync_preferences();
                               - script.execute: refresh_dashboard
 
         - obj:
@@ -2400,7 +2410,7 @@ esphome:
       - if:
           condition:
             lambda: |-
-              return t5_allow_automatic_screen_refresh();
+              return !id(screen_preserve_armed) && t5_allow_automatic_screen_refresh();
           then:
             - delay: 2s
             - lambda: |-
@@ -2409,6 +2419,9 @@ esphome:
             - script.execute: fetch_weather_forecast
             - delay: 1s
             - script.execute: refresh_dashboard
+          else:
+            - lambda: |-
+                id(epaper_display).suspend_updates_for_preserved_screen();
       - script.execute: schedule_battery_sleep
 
 interval:

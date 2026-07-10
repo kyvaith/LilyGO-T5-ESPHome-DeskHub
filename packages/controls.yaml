@@ -28,30 +28,50 @@ binary_sensor:
         input: true
         pullup: true
     on_press:
+      - globals.set:
+          id: screen_preserve_armed
+          value: "false"
       - lambda: |-
           t5_clear_screen_preserving_sleep();
+          id(epaper_display).resume_updates();
+          t5_sync_preferences();
       - script.execute: refresh_dashboard
 
 button:
   - platform: template
     name: "${friendly_name} Refresh Dashboard"
     on_press:
+      - globals.set:
+          id: screen_preserve_armed
+          value: "false"
       - lambda: |-
           t5_clear_screen_preserving_sleep();
+          id(epaper_display).resume_updates();
+          t5_sync_preferences();
       - script.execute: refresh_dashboard
 
   - platform: template
     name: "${friendly_name} Refresh Display"
     on_press:
+      - globals.set:
+          id: screen_preserve_armed
+          value: "false"
       - lambda: |-
           t5_clear_screen_preserving_sleep();
+          id(epaper_display).resume_updates();
+          t5_sync_preferences();
       - script.execute: refresh_dashboard
 
   - platform: template
     name: "${friendly_name} Clean Display"
     on_press:
+      - globals.set:
+          id: screen_preserve_armed
+          value: "false"
       - lambda: |-
           t5_clear_screen_preserving_sleep();
+          id(epaper_display).resume_updates();
+          t5_sync_preferences();
       - lambda: |-
           id(epaper_display).clean();
       - delay: 500ms
