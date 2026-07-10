@@ -1,0 +1,63 @@
+globals:
+  - id: battery_sleep_enabled
+    type: bool
+    restore_value: true
+    initial_value: "false"
+
+deep_sleep:
+  id: battery_deep_sleep
+  esp32_ext1_wakeup:
+    pins:
+      - number: GPIO21
+        allow_other_uses: true
+    mode: ANY_LOW
+
+switch:
+  - platform: template
+    id: battery_sleep_mode
+    name: "${friendly_name} Battery Sleep Mode"
+    icon: mdi:power-sleep
+    lambda: return id(battery_sleep_enabled);
+    turn_on_action:
+      - globals.set:
+          id: battery_sleep_enabled
+          value: "true"
+      - switch.template.publish:
+          id: battery_sleep_mode
+          state: ON
+      - script.execute: schedule_battery_sleep
+    turn_off_action:
+      - globals.set:
+          id: battery_sleep_enabled
+          value: "false"
+      - switch.template.publish:
+          id: battery_sleep_mode
+          state: OFF
+
+button:
+  - platform: template
+    name: "${friendly_name} Sleep Now"
+    icon: mdi:power-sleep
+    on_press:
+      - script.execute: enter_battery_sleep
+
+script:
+  - id: schedule_battery_sleep
+    mode: restart
+    then:
+      - delay: ${battery_awake_duration}
+      - if:
+          condition:
+            lambda: return id(battery_sleep_enabled);
+          then:
+            - script.execute: enter_battery_sleep
+
+  - id: enter_battery_sleep
+    mode: restart
+    then:
+      - lambda: |-
+          id(epaper_display).poweroff_all();
+      - delay: 100ms
+      - deep_sleep.enter:
+          id: battery_deep_sleep
+          sleep_duration: ${battery_sleep_duration}

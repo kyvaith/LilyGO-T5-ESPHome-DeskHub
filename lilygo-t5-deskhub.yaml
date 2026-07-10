@@ -7,20 +7,9 @@ substitutions:
   entity_indoor_temperature: sensor.biuro_2_warunki_temperature
   entity_indoor_humidity: sensor.biuro_2_warunki_humidity
   entity_fan: fan.wentylator_2
-  entity_xtb_balance: sensor.xtb_53600874_saldo
   entity_xtb_deskhub: sensor.xtb_53600874_deskhub
-  entity_xtb_profit: sensor.xtb_53600874_zysk
-  entity_xtb_profit_percent: sensor.xtb_53600874_zysk_procentowy
-  entity_xtb_position_0: sensor.xtb_53600874_samsung_electronics_co_ltd_cfd_zysk_strata
-  entity_xtb_position_1: sensor.xtb_53600874_cd_projekt_sa_cfd_zysk_strata
-  entity_xtb_position_2: sensor.xtb_53600874_synektik_sa_zysk_strata
-  entity_xtb_position_3: sensor.xtb_53600874_asbisc_enterprises_plc_zysk_strata
-  entity_xtb_position_4: sensor.xtb_53600874_kombinat_konopny_s_a_zysk_strata
-  entity_xtb_position_5: sensor.xtb_53600874_medinice_sa_zysk_strata
-  entity_xtb_position_6: sensor.xtb_53600874_datawalk_sa_zysk_strata
-  entity_xtb_position_7: sensor.xtb_53600874_close_only_cd_projekt_sa_zysk_strata
-  entity_xtb_position_8: sensor.xtb_53600874_nvda_zysk_strata
-  entity_xtb_position_9: sensor.xtb_53600874_kghm_zysk_strata
+  battery_sleep_duration: 10min
+  battery_awake_duration: 90s
 
 packages:
   board: !include packages/board.yaml
@@ -28,4 +17,4 @@ packages:
   home_assistant_entities: !include packages/ha_entities.yaml
   display_pages: !include packages/display_pages.yaml
   controls: !include packages/controls.yaml
-  bluetooth_proxy: !include packages/bluetooth_proxy.yaml
+  power_save: !include packages/power_save.yaml

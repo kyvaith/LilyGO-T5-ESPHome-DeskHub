@@ -38,9 +38,8 @@ psram:
   speed: 80MHz
 
 logger:
-  level: INFO
-  baud_rate: 115200
-  hardware_uart: USB_SERIAL_JTAG
+  level: WARN
+  baud_rate: 0
 
 api:
   homeassistant_services: true
@@ -58,7 +57,7 @@ ota:
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
-  power_save_mode: LIGHT
+  power_save_mode: HIGH
 
 external_components:
   - source:

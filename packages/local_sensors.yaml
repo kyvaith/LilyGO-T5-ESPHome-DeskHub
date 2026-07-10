@@ -2,24 +2,24 @@ sensor:
   - platform: wifi_signal
     id: wifi_rssi
     name: "${friendly_name} WiFi RSSI"
-    update_interval: 60s
+    update_interval: 300s
 
   - platform: uptime
     id: device_uptime
     name: "${friendly_name} Uptime"
-    update_interval: 60s
+    update_interval: 300s
 
   - platform: internal_temperature
     id: esp32_temperature
     name: "${friendly_name} ESP32 Temperature"
-    update_interval: 60s
+    update_interval: 300s
 
   - platform: adc
     id: battery_voltage
     name: "${friendly_name} Battery Voltage"
     pin: GPIO14
     attenuation: 12db
-    update_interval: 60s
+    update_interval: 300s
     unit_of_measurement: V
     device_class: voltage
     state_class: measurement
@@ -38,7 +38,7 @@ sensor:
     device_class: battery
     state_class: measurement
     accuracy_decimals: 0
-    update_interval: 60s
+    update_interval: 300s
     lambda: |-
       const float voltage = id(battery_voltage).state;
       if (isnan(voltage)) {
@@ -63,4 +63,3 @@ text_sensor:
   - platform: version
     id: esphome_version_text
     name: "${friendly_name} ESPHome Version"
-

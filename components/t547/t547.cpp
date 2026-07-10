@@ -118,6 +118,12 @@ void T547::eink_on_() {
   panel_on_ = 1;
 }
 
+void T547::poweroff_all() {
+  ESP_LOGV(TAG, "Powering off all e-paper rails");
+  epd_poweroff_all();
+  panel_on_ = 0;
+}
+
 void T547::display() {
   ESP_LOGV(TAG, "Display called");
   uint32_t start_time = millis();
