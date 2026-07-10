@@ -33,8 +33,8 @@ binary_sensor:
           value: "false"
       - lambda: |-
           t5_clear_screen_preserving_sleep();
+          t5_set_flash_screen_preserve_armed(false);
           id(epaper_display).resume_updates();
-          t5_sync_preferences();
       - script.execute: refresh_dashboard
 
 button:
@@ -46,8 +46,8 @@ button:
           value: "false"
       - lambda: |-
           t5_clear_screen_preserving_sleep();
+          t5_set_flash_screen_preserve_armed(false);
           id(epaper_display).resume_updates();
-          t5_sync_preferences();
       - script.execute: refresh_dashboard
 
   - platform: template
@@ -58,8 +58,8 @@ button:
           value: "false"
       - lambda: |-
           t5_clear_screen_preserving_sleep();
+          t5_set_flash_screen_preserve_armed(false);
           id(epaper_display).resume_updates();
-          t5_sync_preferences();
       - script.execute: refresh_dashboard
 
   - platform: template
@@ -70,8 +70,8 @@ button:
           value: "false"
       - lambda: |-
           t5_clear_screen_preserving_sleep();
+          t5_set_flash_screen_preserve_armed(false);
           id(epaper_display).resume_updates();
-          t5_sync_preferences();
       - lambda: |-
           id(epaper_display).clean();
       - delay: 500ms

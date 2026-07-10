@@ -6,9 +6,34 @@
 #include <string>
 
 RTC_DATA_ATTR static bool t5_preserve_screen_after_sleep = false;
+static constexpr uint32_t T5_SCREEN_PRESERVE_PREF_KEY = 0x54535053UL;
+
+static inline esphome::ESPPreferenceObject t5_screen_preserve_preference() {
+  if (esphome::global_preferences == nullptr) {
+    return esphome::ESPPreferenceObject();
+  }
+  return esphome::global_preferences->make_preference<bool>(T5_SCREEN_PRESERVE_PREF_KEY, true);
+}
+
+static inline bool t5_flash_screen_preserve_armed() {
+  bool armed = false;
+  auto pref = t5_screen_preserve_preference();
+  pref.load(&armed);
+  return armed;
+}
+
+static inline bool t5_set_flash_screen_preserve_armed(bool armed) {
+  auto pref = t5_screen_preserve_preference();
+  bool saved = pref.save(&armed);
+  if (esphome::global_preferences != nullptr) {
+    esphome::global_preferences->sync();
+  }
+  return saved;
+}
 
 static inline bool t5_woke_from_screen_preserving_sleep() {
-  return t5_preserve_screen_after_sleep || esp_sleep_get_wakeup_cause() != ESP_SLEEP_WAKEUP_UNDEFINED;
+  return t5_preserve_screen_after_sleep || t5_flash_screen_preserve_armed() ||
+         esp_sleep_get_wakeup_cause() != ESP_SLEEP_WAKEUP_UNDEFINED;
 }
 
 static inline bool t5_allow_automatic_screen_refresh() {
@@ -92,10 +117,11 @@ static inline const char *t5_reset_reason_name() {
 }
 
 static inline std::string t5_boot_diagnostic(bool preserve_armed) {
+  const bool flash_preserve = preserve_armed || t5_flash_screen_preserve_armed();
   char buffer[128];
   snprintf(buffer, sizeof(buffer), "reset=%s wake=%s rtc_preserve=%s flash_preserve=%s",
            t5_reset_reason_name(), t5_sleep_wakeup_cause_name(),
-           t5_preserve_screen_after_sleep ? "yes" : "no", preserve_armed ? "yes" : "no");
+           t5_preserve_screen_after_sleep ? "yes" : "no", flash_preserve ? "yes" : "no");
   return std::string(buffer);
 }
 

@@ -31,8 +31,8 @@ switch:
           value: "false"
       - lambda: |-
           t5_clear_screen_preserving_sleep();
+          t5_set_flash_screen_preserve_armed(false);
           id(epaper_display).resume_updates();
-          t5_sync_preferences();
       - globals.set:
           id: battery_sleep_enabled
           value: "false"
@@ -76,7 +76,7 @@ script:
           value: "true"
       - lambda: |-
           t5_mark_screen_preserving_sleep();
-          t5_sync_preferences();
+          t5_set_flash_screen_preserve_armed(true);
           id(epaper_display).poweroff_all();
       - delay: 100ms
       - deep_sleep.enter:

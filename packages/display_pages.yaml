@@ -728,8 +728,8 @@ lvgl:
                                   value: "false"
                               - lambda: |-
                                   t5_clear_screen_preserving_sleep();
+                                  t5_set_flash_screen_preserve_armed(false);
                                   id(epaper_display).resume_updates();
-                                  t5_sync_preferences();
                               - script.execute: refresh_dashboard
                         - id: fan_on_button
                           text: "ON"
@@ -750,8 +750,8 @@ lvgl:
                                   value: "false"
                               - lambda: |-
                                   t5_clear_screen_preserving_sleep();
+                                  t5_set_flash_screen_preserve_armed(false);
                                   id(epaper_display).resume_updates();
-                                  t5_sync_preferences();
                               - script.execute: refresh_dashboard
 
         - obj:

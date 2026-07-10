@@ -4,8 +4,10 @@
 #include "esphome/core/log.h"
 #include "esphome/core/application.h"
 #include "esphome/core/helpers.h"
+#include "esphome/core/preferences.h"
 #ifdef USE_ESP32_FRAMEWORK_ARDUINO
 
+#include <esp_sleep.h>
 #include <esp32-hal-gpio.h>
 #include <Arduino.h>
 #include <algorithm>
@@ -26,6 +28,17 @@ static constexpr uint8_t PAPERBOY_RESET_COUNTER_MASK[4] = {
     0x1C,  // higher pixel changed
     0x00,  // both pixels changed
 };
+static constexpr uint32_t T5_SCREEN_PRESERVE_PREF_KEY = 0x54535053UL;
+
+static bool t547_flash_screen_preserve_armed() {
+  if (esphome::global_preferences == nullptr) {
+    return false;
+  }
+  bool armed = false;
+  auto pref = esphome::global_preferences->make_preference<bool>(T5_SCREEN_PRESERVE_PREF_KEY, true);
+  pref.load(&armed);
+  return armed;
+}
 
 void T547::setup() {
   ESP_LOGV(TAG, "Initialize called");
@@ -60,6 +73,9 @@ void T547::setup() {
   memset(this->partial_buffer_, 0xFF, buffer_size);
   if (this->mono_state_buffer_ != nullptr) {
     memset(this->mono_state_buffer_, 0, mono_state_size);
+  }
+  if (t547_flash_screen_preserve_armed() || esp_sleep_get_wakeup_cause() != ESP_SLEEP_WAKEUP_UNDEFINED) {
+    this->suspend_updates_for_preserved_screen();
   }
   ESP_LOGV(TAG, "Initialize complete");
 }
