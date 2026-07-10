@@ -6,14 +6,6 @@ globals:
 
 deep_sleep:
   id: battery_deep_sleep
-  wakeup_pin:
-    number: GPIO21
-    allow_other_uses: true
-    inverted: true
-    mode:
-      input: true
-      pullup: true
-  wakeup_pin_mode: KEEP_AWAKE
 
 switch:
   - platform: template
@@ -30,6 +22,8 @@ switch:
           state: ON
       - script.execute: schedule_battery_sleep
     turn_off_action:
+      - lambda: |-
+          t5_clear_screen_preserving_sleep();
       - globals.set:
           id: battery_sleep_enabled
           value: "false"
@@ -45,6 +39,16 @@ button:
       - script.execute: enter_battery_sleep
 
 script:
+  - id: guarded_refresh_dashboard
+    mode: restart
+    then:
+      - if:
+          condition:
+            lambda: |-
+              return t5_allow_automatic_screen_refresh();
+          then:
+            - script.execute: refresh_dashboard
+
   - id: schedule_battery_sleep
     mode: restart
     then:
@@ -59,6 +63,7 @@ script:
     mode: restart
     then:
       - lambda: |-
+          t5_mark_screen_preserving_sleep();
           id(epaper_display).poweroff_all();
       - delay: 100ms
       - deep_sleep.enter:

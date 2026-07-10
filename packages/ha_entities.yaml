@@ -5,7 +5,7 @@ sensor:
     internal: true
     on_value:
       then:
-        - script.execute: refresh_dashboard
+        - script.execute: guarded_refresh_dashboard
 
   - platform: homeassistant
     id: indoor_humidity
@@ -13,7 +13,7 @@ sensor:
     internal: true
     on_value:
       then:
-        - script.execute: refresh_dashboard
+        - script.execute: guarded_refresh_dashboard
 
   - platform: homeassistant
     id: weather_temperature
@@ -22,7 +22,7 @@ sensor:
     internal: true
     on_value:
       then:
-        - script.execute: refresh_dashboard
+        - script.execute: guarded_refresh_dashboard
 
 text_sensor:
   - platform: homeassistant
@@ -31,7 +31,7 @@ text_sensor:
     internal: true
     on_value:
       then:
-        - lambda: id(refresh_dashboard).execute();
+        - script.execute: guarded_refresh_dashboard
 
   - platform: template
     id: weather_forecast
@@ -45,7 +45,7 @@ text_sensor:
     internal: true
     on_value:
       then:
-        - lambda: id(refresh_dashboard).execute();
+        - script.execute: guarded_refresh_dashboard
 
   - platform: homeassistant
     id: xtb_deskhub_summary
@@ -54,7 +54,7 @@ text_sensor:
     internal: true
     on_value:
       then:
-        - lambda: id(refresh_dashboard).execute();
+        - script.execute: guarded_refresh_dashboard
 
   - platform: homeassistant
     id: xtb_deskhub_rows
@@ -63,4 +63,4 @@ text_sensor:
     internal: true
     on_value:
       then:
-        - lambda: id(refresh_dashboard).execute();
+        - script.execute: guarded_refresh_dashboard

@@ -2,6 +2,8 @@ esphome:
   name: ${name}
   friendly_name: ${friendly_name}
   build_path: !env_var ESPHOME_BUILD_PATH .b
+  includes:
+    - src/wake_guard.h
   on_boot:
     priority: 600
     then:
@@ -45,10 +47,15 @@ api:
   homeassistant_services: true
   on_client_connected:
     then:
-      - delay: 3s
-      - script.execute: fetch_weather_forecast
-      - delay: 250ms
-      - script.execute: refresh_dashboard
+      - if:
+          condition:
+            lambda: |-
+              return t5_allow_automatic_screen_refresh();
+          then:
+            - delay: 3s
+            - script.execute: fetch_weather_forecast
+            - delay: 250ms
+            - script.execute: guarded_refresh_dashboard
 
 ota:
   - platform: esphome

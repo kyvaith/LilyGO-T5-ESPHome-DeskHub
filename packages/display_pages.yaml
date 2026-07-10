@@ -723,6 +723,8 @@ lvgl:
                                   data:
                                     entity_id: ${entity_fan}
                               - delay: 250ms
+                              - lambda: |-
+                                  t5_clear_screen_preserving_sleep();
                               - script.execute: refresh_dashboard
                         - id: fan_on_button
                           text: "ON"
@@ -738,6 +740,8 @@ lvgl:
                                   data:
                                     entity_id: ${entity_fan}
                               - delay: 250ms
+                              - lambda: |-
+                                  t5_clear_screen_preserving_sleep();
                               - script.execute: refresh_dashboard
 
         - obj:
@@ -1673,7 +1677,7 @@ script:
                 std::string forecast = response["response"].as<std::string>();
                 ESP_LOGI("weather", "Forecast response: %s", forecast.c_str());
                 id(weather_forecast).publish_state(forecast);
-            - script.execute: refresh_dashboard
+            - script.execute: guarded_refresh_dashboard
           on_error:
             - lambda: |-
                 ESP_LOGW("weather", "Forecast action failed: %s", error.c_str());
@@ -2393,19 +2397,24 @@ esphome:
   on_boot:
     priority: -100
     then:
-      - delay: 2s
-      - lambda: |-
-          id(epaper_display).clean();
-      - delay: 2s
-      - script.execute: fetch_weather_forecast
-      - delay: 1s
-      - script.execute: refresh_dashboard
+      - if:
+          condition:
+            lambda: |-
+              return t5_allow_automatic_screen_refresh();
+          then:
+            - delay: 2s
+            - lambda: |-
+                id(epaper_display).clean();
+            - delay: 2s
+            - script.execute: fetch_weather_forecast
+            - delay: 1s
+            - script.execute: refresh_dashboard
       - script.execute: schedule_battery_sleep
 
 interval:
   - interval: 60s
     then:
-      - script.execute: refresh_dashboard
+      - script.execute: guarded_refresh_dashboard
 
   - interval: 30min
     then:

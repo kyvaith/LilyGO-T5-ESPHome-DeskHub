@@ -23,28 +23,35 @@ binary_sensor:
     name: "${friendly_name} Button"
     pin:
       number: GPIO21
-      allow_other_uses: true
       inverted: true
       mode:
         input: true
         pullup: true
     on_press:
+      - lambda: |-
+          t5_clear_screen_preserving_sleep();
       - script.execute: refresh_dashboard
 
 button:
   - platform: template
     name: "${friendly_name} Refresh Dashboard"
     on_press:
+      - lambda: |-
+          t5_clear_screen_preserving_sleep();
       - script.execute: refresh_dashboard
 
   - platform: template
     name: "${friendly_name} Refresh Display"
     on_press:
+      - lambda: |-
+          t5_clear_screen_preserving_sleep();
       - script.execute: refresh_dashboard
 
   - platform: template
     name: "${friendly_name} Clean Display"
     on_press:
+      - lambda: |-
+          t5_clear_screen_preserving_sleep();
       - lambda: |-
           id(epaper_display).clean();
       - delay: 500ms
