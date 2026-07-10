@@ -9,6 +9,7 @@ substitutions:
   entity_fan: fan.wentylator_2
   entity_xtb_deskhub: sensor.xtb_53600874_deskhub
   battery_sleep_duration: 10min
+  battery_sleep_duration_us: 600000000ULL
   battery_awake_duration: 90s
 
 packages:

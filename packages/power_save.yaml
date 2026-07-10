@@ -8,9 +8,6 @@ globals:
     restore_value: true
     initial_value: "false"
 
-deep_sleep:
-  id: battery_deep_sleep
-
 switch:
   - platform: template
     id: battery_sleep_mode
@@ -47,6 +44,16 @@ button:
     on_press:
       - script.execute: enter_battery_sleep
 
+  - platform: template
+    name: "${friendly_name} Test Sleep 30s"
+    icon: mdi:sleep
+    on_press:
+      - globals.set:
+          id: screen_preserve_armed
+          value: "true"
+      - lambda: |-
+          t5_enter_screen_preserving_deep_sleep(30000000ULL);
+
 script:
   - id: guarded_refresh_dashboard
     mode: restart
@@ -75,10 +82,4 @@ script:
           id: screen_preserve_armed
           value: "true"
       - lambda: |-
-          t5_mark_screen_preserving_sleep();
-          t5_set_flash_screen_preserve_armed(true);
-          id(epaper_display).poweroff_all();
-      - delay: 100ms
-      - deep_sleep.enter:
-          id: battery_deep_sleep
-          sleep_duration: ${battery_sleep_duration}
+          t5_enter_screen_preserving_deep_sleep(${battery_sleep_duration_us});

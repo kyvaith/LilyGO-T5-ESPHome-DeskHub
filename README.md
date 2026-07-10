@@ -146,10 +146,11 @@ Assistant service calls remain available. For battery use, enable
 `LilyGO T5 DeskHub Sleep Now`.
 
 When battery sleep mode is enabled, the device stays awake for
-`battery_awake_duration` after boot, refreshes the dashboard, powers down the
-e-paper rails, then enters ESP32 deep sleep for `battery_sleep_duration`.
-GPIO21 is configured as an EXT1 wake source, so the physical button can wake the
-board before the timer expires.
+`battery_awake_duration` after boot, refreshes the dashboard, then enters ESP32
+deep sleep for `battery_sleep_duration` through a direct ESP sleep call. The
+firmware intentionally keeps the e-paper image intact before sleep and suppresses
+the first automatic redraw after a timer wake, so the display does not perform a
+full flashing reload on every wake cycle.
 
 The LILYGO EPD47 S3 README lists the board at roughly 90-230+ mA while awake
 with WiFi on and about 380 uA in sleep. Week-long battery runtime therefore

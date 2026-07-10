@@ -8,6 +8,8 @@
 #ifdef USE_ESP32_FRAMEWORK_ARDUINO
 
 #include <esp_sleep.h>
+#include <nvs.h>
+#include <nvs_flash.h>
 #include <esp32-hal-gpio.h>
 #include <Arduino.h>
 #include <algorithm>
@@ -29,8 +31,29 @@ static constexpr uint8_t PAPERBOY_RESET_COUNTER_MASK[4] = {
     0x00,  // both pixels changed
 };
 static constexpr uint32_t T5_SCREEN_PRESERVE_PREF_KEY = 0x54535053UL;
+static constexpr const char *T5_SCREEN_PRESERVE_NVS_NAMESPACE = "t5desk";
+static constexpr const char *T5_SCREEN_PRESERVE_NVS_KEY = "preserve";
+
+static bool t547_nvs_screen_preserve_armed() {
+  nvs_handle_t handle;
+  esp_err_t err = nvs_open(T5_SCREEN_PRESERVE_NVS_NAMESPACE, NVS_READONLY, &handle);
+  if (err == ESP_ERR_NVS_NOT_INITIALIZED) {
+    nvs_flash_init();
+    err = nvs_open(T5_SCREEN_PRESERVE_NVS_NAMESPACE, NVS_READONLY, &handle);
+  }
+  if (err != ESP_OK) {
+    return false;
+  }
+  uint8_t value = 0;
+  err = nvs_get_u8(handle, T5_SCREEN_PRESERVE_NVS_KEY, &value);
+  nvs_close(handle);
+  return err == ESP_OK && value != 0;
+}
 
 static bool t547_flash_screen_preserve_armed() {
+  if (t547_nvs_screen_preserve_armed()) {
+    return true;
+  }
   if (esphome::global_preferences == nullptr) {
     return false;
   }
