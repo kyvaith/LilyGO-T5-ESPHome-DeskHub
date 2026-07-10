@@ -6,11 +6,14 @@ globals:
 
 deep_sleep:
   id: battery_deep_sleep
-  esp32_ext1_wakeup:
-    pins:
-      - number: GPIO21
-        allow_other_uses: true
-    mode: ANY_LOW
+  wakeup_pin:
+    number: GPIO21
+    allow_other_uses: true
+    inverted: true
+    mode:
+      input: true
+      pullup: true
+  wakeup_pin_mode: KEEP_AWAKE
 
 switch:
   - platform: template
