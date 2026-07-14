@@ -924,7 +924,7 @@ lvgl:
                         x: 54
                         y: 8
                         width: 424
-                        height: 68
+                        height: 78
                         bg_color: 0xFFFFFF
                         bg_opa: cover
                         border_width: 0
@@ -999,7 +999,7 @@ lvgl:
                     - label:
                         id: xtb_axis_label_upper_mid
                         x: 0
-                        y: 30
+                        y: 33
                         width: 42
                         height: 14
                         text: "+10%"
@@ -1011,7 +1011,7 @@ lvgl:
                     - label:
                         id: xtb_axis_label_zero
                         x: 0
-                        y: 53
+                        y: 59
                         width: 42
                         height: 14
                         text: "0%"
@@ -1023,7 +1023,7 @@ lvgl:
                     - label:
                         id: xtb_axis_label_bottom
                         x: 0
-                        y: 76
+                        y: 84
                         width: 42
                         height: 14
                         text: "-10%"
@@ -2148,7 +2148,7 @@ script:
           static int last_chart_minute = -1;
           static float chart_values[24] = {};
           const int minute_key = now.is_valid() ? (now.hour * 60 + now.minute) : -2;
-          const bool chart_value_valid = !isnan(profit_percent);
+          const bool chart_value_valid = std::isfinite(profit_percent);
 
           auto save_chart_history = [&]() {
             char buffer[256];
@@ -2192,6 +2192,27 @@ script:
             if (index != 24) {
               return false;
             }
+            int first_valid = -1;
+            for (int i = 0; i < 24; i++) {
+              if (std::isfinite(parsed[i])) {
+                first_valid = i;
+                break;
+              }
+            }
+            if (first_valid < 0) {
+              return false;
+            }
+            for (int i = 0; i < first_valid; i++) {
+              parsed[i] = parsed[first_valid];
+            }
+            float previous = parsed[first_valid];
+            for (int i = first_valid + 1; i < 24; i++) {
+              if (std::isfinite(parsed[i])) {
+                previous = parsed[i];
+              } else {
+                parsed[i] = previous;
+              }
+            }
             for (int i = 0; i < 24; i++) {
               chart_values[i] = parsed[i];
             }
@@ -2201,9 +2222,10 @@ script:
           auto render_chart = [&]() {
             float min_value = NAN;
             float max_value = NAN;
+            float sorted_values[24] = {};
             int valid_points = 0;
             for (int i = 0; i < 24; i++) {
-              if (isnan(chart_values[i])) continue;
+              if (!std::isfinite(chart_values[i])) continue;
               if (valid_points == 0) {
                 min_value = chart_values[i];
                 max_value = chart_values[i];
@@ -2211,15 +2233,26 @@ script:
                 if (chart_values[i] < min_value) min_value = chart_values[i];
                 if (chart_values[i] > max_value) max_value = chart_values[i];
               }
+              sorted_values[valid_points] = chart_values[i];
               valid_points++;
             }
 
             float chart_top = 20.0f;
             float chart_bottom = -10.0f;
             if (valid_points > 0) {
-              const float data_span = std::max(0.0f, max_value - min_value);
-              const float center = (min_value + max_value) / 2.0f;
-              const float min_visible_span = 2.0f;
+              std::sort(sorted_values, sorted_values + valid_points);
+              float scale_min = min_value;
+              float scale_max = max_value;
+              if (valid_points >= 8) {
+                const float q1 = sorted_values[(valid_points - 1) / 4];
+                const float q3 = sorted_values[(3 * (valid_points - 1)) / 4];
+                const float iqr = std::max(0.05f, q3 - q1);
+                scale_min = std::max(min_value, q1 - 1.5f * iqr);
+                scale_max = std::min(max_value, q3 + 1.5f * iqr);
+              }
+              const float data_span = std::max(0.0f, scale_max - scale_min);
+              const float center = (scale_min + scale_max) / 2.0f;
+              const float min_visible_span = 0.5f;
               const float padded_span = std::max(min_visible_span, data_span * 1.5f);
               float raw_bottom = center - padded_span / 2.0f;
               float raw_top = center + padded_span / 2.0f;
@@ -2276,15 +2309,17 @@ script:
 
             lv_obj_invalidate(id(xtb_chart_area));
             lv_obj_invalidate(id(xtb_profit_chart));
+            lv_chart_set_all_values(id(xtb_profit_chart), id(xtb_profit_series), LV_CHART_POINT_NONE);
             for (int i = 0; i < 24; i++) {
-              if (isnan(chart_values[i])) {
-                lv_chart_set_value_by_id(id(xtb_profit_chart), id(xtb_profit_series), i, LV_CHART_POINT_NONE);
-                continue;
-              }
+              if (!std::isfinite(chart_values[i])) continue;
               float scaled = (chart_values[i] - chart_bottom) * 100.0f / chart_span;
               int point = std::max(0, std::min(100, (int) roundf(scaled)));
               lv_chart_set_value_by_id(id(xtb_profit_chart), id(xtb_profit_series), i, point);
             }
+            ESP_LOGW("xtb.chart", "data=%.2f..%.2f axis=%.2f..%.2f points=%d first=%.2f last=%.2f",
+                     min_value, max_value, chart_bottom, chart_top, valid_points,
+                     valid_points > 0 ? chart_values[0] : NAN,
+                     valid_points > 0 ? chart_values[23] : NAN);
             lv_chart_refresh(id(xtb_profit_chart));
             lv_obj_invalidate(id(xtb_profit_chart));
             lv_obj_invalidate(id(xtb_chart_area));
