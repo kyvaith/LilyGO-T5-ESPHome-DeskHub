@@ -2239,6 +2239,7 @@ script:
 
             float chart_top = 20.0f;
             float chart_bottom = -10.0f;
+            float chart_center = 5.0f;
             if (valid_points > 0) {
               std::sort(sorted_values, sorted_values + valid_points);
               float scale_min = min_value;
@@ -2250,12 +2251,20 @@ script:
                 scale_min = std::max(min_value, q1 - 1.5f * iqr);
                 scale_max = std::min(max_value, q3 + 1.5f * iqr);
               }
-              const float data_span = std::max(0.0f, scale_max - scale_min);
-              const float center = (scale_min + scale_max) / 2.0f;
-              const float min_visible_span = 0.5f;
-              const float padded_span = std::max(min_visible_span, data_span * 1.5f);
-              float raw_bottom = center - padded_span / 2.0f;
-              float raw_top = center + padded_span / 2.0f;
+
+              float center_sum = 0.0f;
+              int center_points = 0;
+              for (int i = 0; i < valid_points; i++) {
+                if (sorted_values[i] < scale_min || sorted_values[i] > scale_max) continue;
+                center_sum += sorted_values[i];
+                center_points++;
+              }
+              chart_center = center_points > 0 ? center_sum / center_points : (scale_min + scale_max) / 2.0f;
+              float required_half_span = 0.25f;
+              for (int i = 0; i < valid_points; i++) {
+                if (sorted_values[i] < scale_min || sorted_values[i] > scale_max) continue;
+                required_half_span = std::max(required_half_span, fabsf(sorted_values[i] - chart_center) * 1.25f);
+              }
 
               auto nice_step = [](float value) {
                 if (value <= 0.0f || isnan(value)) return 1.0f;
@@ -2275,13 +2284,10 @@ script:
                 return nice * magnitude;
               };
 
-              const float step = nice_step((raw_top - raw_bottom) / 3.0f);
-              chart_bottom = floorf(raw_bottom / step) * step;
-              chart_top = ceilf(raw_top / step) * step;
-              if (chart_top - chart_bottom < min_visible_span) {
-                chart_bottom = center - min_visible_span / 2.0f;
-                chart_top = center + min_visible_span / 2.0f;
-              }
+              const float step = nice_step(required_half_span / 2.0f);
+              const float half_span = ceilf(required_half_span / step) * step;
+              chart_bottom = chart_center - half_span;
+              chart_top = chart_center + half_span;
             }
 
             const float chart_span = chart_top - chart_bottom;
@@ -2316,8 +2322,8 @@ script:
               int point = std::max(0, std::min(100, (int) roundf(scaled)));
               lv_chart_set_value_by_id(id(xtb_profit_chart), id(xtb_profit_series), i, point);
             }
-            ESP_LOGW("xtb.chart", "data=%.2f..%.2f axis=%.2f..%.2f points=%d first=%.2f last=%.2f",
-                     min_value, max_value, chart_bottom, chart_top, valid_points,
+            ESP_LOGW("xtb.chart", "data=%.2f..%.2f mean=%.2f axis=%.2f..%.2f points=%d first=%.2f last=%.2f",
+                     min_value, max_value, chart_center, chart_bottom, chart_top, valid_points,
                      valid_points > 0 ? chart_values[0] : NAN,
                      valid_points > 0 ? chart_values[23] : NAN);
             lv_chart_refresh(id(xtb_profit_chart));
