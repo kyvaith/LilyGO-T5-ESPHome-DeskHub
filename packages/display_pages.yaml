@@ -1814,6 +1814,12 @@ script:
           lv_obj_set_style_height(id(xtb_profit_chart), 0, LV_PART_INDICATOR);
           lv_obj_set_style_radius(id(xtb_profit_chart), 0, LV_PART_INDICATOR);
           lv_obj_set_style_bg_opa(id(xtb_profit_chart), LV_OPA_TRANSP, LV_PART_INDICATOR);
+          lv_obj_set_pos(id(xtb_profit_chart), 54, 8);
+          lv_obj_set_size(id(xtb_profit_chart), 424, 78);
+          lv_obj_set_style_pad_all(id(xtb_profit_chart), 0, LV_PART_MAIN);
+          lv_obj_set_style_bg_color(id(xtb_profit_chart), lv_color_hex(0xFFFFFF), LV_PART_MAIN);
+          lv_obj_set_style_bg_opa(id(xtb_profit_chart), LV_OPA_COVER, LV_PART_MAIN);
+          lv_obj_set_style_border_width(id(xtb_profit_chart), 0, LV_PART_MAIN);
           lv_obj_set_style_pad_left(id(xtb_profit_chart), 0, LV_PART_MAIN);
           lv_obj_set_style_line_width(id(xtb_profit_chart), 2, LV_PART_ITEMS);
           lv_obj_set_style_line_color(id(xtb_profit_chart), lv_color_hex(0x000000), LV_PART_ITEMS);
@@ -2322,7 +2328,7 @@ script:
               int point = std::max(0, std::min(100, (int) roundf(scaled)));
               lv_chart_set_value_by_id(id(xtb_profit_chart), id(xtb_profit_series), i, point);
             }
-            ESP_LOGW("xtb.chart", "data=%.2f..%.2f mean=%.2f axis=%.2f..%.2f points=%d first=%.2f last=%.2f",
+            ESP_LOGD("xtb.chart", "data=%.2f..%.2f mean=%.2f axis=%.2f..%.2f points=%d first=%.2f last=%.2f",
                      min_value, max_value, chart_center, chart_bottom, chart_top, valid_points,
                      valid_points > 0 ? chart_values[0] : NAN,
                      valid_points > 0 ? chart_values[23] : NAN);
