@@ -936,6 +936,7 @@ lvgl:
                         div_line_count_ver: 1
                         main:
                           pad_left: 0
+                          pad_bottom: 10
                           line_color: 0xB8B8B8
                           line_width: 1
                           line_dash_width: 4
@@ -1815,6 +1816,7 @@ script:
           lv_obj_set_style_radius(id(xtb_profit_chart), 0, LV_PART_INDICATOR);
           lv_obj_set_style_bg_opa(id(xtb_profit_chart), LV_OPA_TRANSP, LV_PART_INDICATOR);
           lv_obj_set_style_pad_left(id(xtb_profit_chart), 0, LV_PART_MAIN);
+          lv_obj_set_style_pad_bottom(id(xtb_profit_chart), 10, LV_PART_MAIN);
           lv_obj_set_style_line_width(id(xtb_profit_chart), 2, LV_PART_ITEMS);
           lv_obj_set_style_line_color(id(xtb_profit_chart), lv_color_hex(0x000000), LV_PART_ITEMS);
           lv_obj_set_style_width(id(xtb_profit_chart), 0, LV_PART_CURSOR);
@@ -2277,6 +2279,10 @@ script:
             lv_obj_invalidate(id(xtb_chart_area));
             lv_obj_invalidate(id(xtb_profit_chart));
             for (int i = 0; i < 24; i++) {
+              if (isnan(chart_values[i])) {
+                lv_chart_set_value_by_id(id(xtb_profit_chart), id(xtb_profit_series), i, LV_CHART_POINT_NONE);
+                continue;
+              }
               float scaled = (chart_values[i] - chart_bottom) * 100.0f / chart_span;
               int point = std::max(0, std::min(100, (int) roundf(scaled)));
               lv_chart_set_value_by_id(id(xtb_profit_chart), id(xtb_profit_series), i, point);
