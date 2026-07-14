@@ -924,7 +924,7 @@ lvgl:
                         x: 54
                         y: 8
                         width: 424
-                        height: 78
+                        height: 68
                         bg_color: 0xFFFFFF
                         bg_opa: cover
                         border_width: 0
@@ -936,7 +936,6 @@ lvgl:
                         div_line_count_ver: 1
                         main:
                           pad_left: 0
-                          pad_bottom: 10
                           line_color: 0xB8B8B8
                           line_width: 1
                           line_dash_width: 4
@@ -1000,7 +999,7 @@ lvgl:
                     - label:
                         id: xtb_axis_label_upper_mid
                         x: 0
-                        y: 33
+                        y: 30
                         width: 42
                         height: 14
                         text: "+10%"
@@ -1012,7 +1011,7 @@ lvgl:
                     - label:
                         id: xtb_axis_label_zero
                         x: 0
-                        y: 59
+                        y: 53
                         width: 42
                         height: 14
                         text: "0%"
@@ -1024,7 +1023,7 @@ lvgl:
                     - label:
                         id: xtb_axis_label_bottom
                         x: 0
-                        y: 84
+                        y: 76
                         width: 42
                         height: 14
                         text: "-10%"
@@ -1816,7 +1815,6 @@ script:
           lv_obj_set_style_radius(id(xtb_profit_chart), 0, LV_PART_INDICATOR);
           lv_obj_set_style_bg_opa(id(xtb_profit_chart), LV_OPA_TRANSP, LV_PART_INDICATOR);
           lv_obj_set_style_pad_left(id(xtb_profit_chart), 0, LV_PART_MAIN);
-          lv_obj_set_style_pad_bottom(id(xtb_profit_chart), 10, LV_PART_MAIN);
           lv_obj_set_style_line_width(id(xtb_profit_chart), 2, LV_PART_ITEMS);
           lv_obj_set_style_line_color(id(xtb_profit_chart), lv_color_hex(0x000000), LV_PART_ITEMS);
           lv_obj_set_style_width(id(xtb_profit_chart), 0, LV_PART_CURSOR);
