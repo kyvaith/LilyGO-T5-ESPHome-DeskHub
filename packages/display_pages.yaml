@@ -2006,10 +2006,12 @@ script:
             return out;
           };
 
-          auto axis_percent = [](float value) {
+          auto axis_percent = [](float value, int decimals = 0) {
             char buffer[24];
             if (fabsf(value) < 0.05f) {
               snprintf(buffer, sizeof(buffer), "0%%");
+            } else if (decimals > 0) {
+              snprintf(buffer, sizeof(buffer), "%+.*f%%", decimals, value);
             } else {
               snprintf(buffer, sizeof(buffer), "%+.0f%%", value);
             }
@@ -2197,32 +2199,80 @@ script:
           };
 
           auto render_chart = [&]() {
-            float required_top = 20.0f;
+            float min_value = NAN;
+            float max_value = NAN;
+            int valid_points = 0;
             for (int i = 0; i < 24; i++) {
               if (isnan(chart_values[i])) continue;
-              if (chart_values[i] > required_top) required_top = chart_values[i];
-              if (chart_values[i] < -required_top / 2.0f) required_top = -2.0f * chart_values[i];
+              if (valid_points == 0) {
+                min_value = chart_values[i];
+                max_value = chart_values[i];
+              } else {
+                if (chart_values[i] < min_value) min_value = chart_values[i];
+                if (chart_values[i] > max_value) max_value = chart_values[i];
+              }
+              valid_points++;
             }
-            float chart_top = ceilf(required_top / 10.0f) * 10.0f;
-            if (chart_top < 20.0f) chart_top = 20.0f;
-            float chart_bottom = -chart_top / 2.0f;
-            const float chart_span = chart_top - chart_bottom;
 
-            set_label(id(xtb_axis_label_top), axis_percent(chart_top));
-            set_label(id(xtb_axis_label_upper_mid), axis_percent(chart_top - chart_span / 3.0f));
-            set_label(id(xtb_axis_label_zero), axis_percent(chart_top - chart_span * 2.0f / 3.0f));
-            set_label(id(xtb_axis_label_bottom), axis_percent(chart_bottom));
+            float chart_top = 20.0f;
+            float chart_bottom = -10.0f;
+            if (valid_points > 0) {
+              const float data_span = std::max(0.0f, max_value - min_value);
+              const float center = (min_value + max_value) / 2.0f;
+              const float min_visible_span = 2.0f;
+              const float padded_span = std::max(min_visible_span, data_span * 1.5f);
+              float raw_bottom = center - padded_span / 2.0f;
+              float raw_top = center + padded_span / 2.0f;
+
+              auto nice_step = [](float value) {
+                if (value <= 0.0f || isnan(value)) return 1.0f;
+                const float exponent = floorf(log10f(value));
+                const float magnitude = powf(10.0f, exponent);
+                const float normalized = value / magnitude;
+                float nice = 1.0f;
+                if (normalized <= 1.0f) {
+                  nice = 1.0f;
+                } else if (normalized <= 2.0f) {
+                  nice = 2.0f;
+                } else if (normalized <= 5.0f) {
+                  nice = 5.0f;
+                } else {
+                  nice = 10.0f;
+                }
+                return nice * magnitude;
+              };
+
+              const float step = nice_step((raw_top - raw_bottom) / 3.0f);
+              chart_bottom = floorf(raw_bottom / step) * step;
+              chart_top = ceilf(raw_top / step) * step;
+              if (chart_top - chart_bottom < min_visible_span) {
+                chart_bottom = center - min_visible_span / 2.0f;
+                chart_top = center + min_visible_span / 2.0f;
+              }
+            }
+
+            const float chart_span = chart_top - chart_bottom;
+            const int axis_decimals = chart_span < 10.0f ? 1 : 0;
+
+            set_label(id(xtb_axis_label_top), axis_percent(chart_top, axis_decimals));
+            set_label(id(xtb_axis_label_upper_mid), axis_percent(chart_top - chart_span / 3.0f, axis_decimals));
+            set_label(id(xtb_axis_label_zero), axis_percent(chart_top - chart_span * 2.0f / 3.0f, axis_decimals));
+            set_label(id(xtb_axis_label_bottom), axis_percent(chart_bottom, axis_decimals));
 
             lv_obj_update_layout(id(xtb_profit_chart));
             int32_t pad_top = lv_obj_get_style_pad_top(id(xtb_profit_chart), LV_PART_MAIN);
             int32_t pad_bottom = lv_obj_get_style_pad_bottom(id(xtb_profit_chart), LV_PART_MAIN);
             int32_t chart_h = lv_obj_get_height(id(xtb_profit_chart));
             int32_t plot_h = std::max<int32_t>(1, chart_h - pad_top - pad_bottom);
-            int32_t zero_y = pad_top + (int32_t) roundf((chart_top * plot_h) / chart_span);
-            lv_point_t zero_point;
-            zero_point.x = 0;
-            zero_point.y = zero_y;
-            lv_chart_set_cursor_pos(id(xtb_profit_chart), id(xtb_zero_cursor), &zero_point);
+            const bool zero_visible = chart_bottom <= 0.0f && chart_top >= 0.0f;
+            lv_obj_set_style_line_opa(id(xtb_profit_chart), zero_visible ? LV_OPA_60 : LV_OPA_TRANSP, LV_PART_CURSOR);
+            if (zero_visible) {
+              int32_t zero_y = pad_top + (int32_t) roundf(((chart_top - 0.0f) * plot_h) / chart_span);
+              lv_point_t zero_point;
+              zero_point.x = 0;
+              zero_point.y = zero_y;
+              lv_chart_set_cursor_pos(id(xtb_profit_chart), id(xtb_zero_cursor), &zero_point);
+            }
 
             lv_obj_invalidate(id(xtb_chart_area));
             lv_obj_invalidate(id(xtb_profit_chart));
