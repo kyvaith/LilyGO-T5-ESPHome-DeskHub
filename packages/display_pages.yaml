@@ -111,6 +111,7 @@ font:
       - "\U000F0210" # fan
       - "\U000F0425" # power
       - "\U000F050F" # thermometer
+      - "\U000F051B" # timer-outline
       - "\U000F058E" # water-percent
       - "\U000F0590" # cloudy
       - "\U000F0595" # partly-cloudy
@@ -2420,12 +2421,14 @@ script:
             std::string name;
             float daily;
             float profit;
+            std::string daily_status;
           };
           static PositionDisplayRow display_rows[MAX_POSITION_ROWS];
           for (int i = 0; i < MAX_POSITION_ROWS; i++) {
             display_rows[i].name.clear();
             display_rows[i].daily = NAN;
             display_rows[i].profit = NAN;
+            display_rows[i].daily_status.clear();
           }
 
           int visible = 0;
@@ -2433,12 +2436,14 @@ script:
             std::string name;
             float daily_change = NAN;
             float row_profit = NAN;
+            std::string daily_status;
             if (use_deskhub_rows) {
               std::string row = delimited_field(deskhub_rows, ';', i);
               if (valid_text(row)) {
                 name = delimited_field(row, '|', 0);
                 daily_change = float_from_text(delimited_field(row, '|', 1), NAN);
                 row_profit = float_from_text(delimited_field(row, '|', 2), NAN);
+                daily_status = compact_spaces(delimited_field(row, '|', 3));
               }
             }
             name = compact_spaces(name);
@@ -2446,9 +2451,13 @@ script:
               continue;
             }
             if (!valid_text(name)) name = std::string("Pozycja ") + to_string(i + 1);
+            if (!valid_text(daily_status) && !isnan(daily_change) && fabsf(daily_change) < 0.000001f) {
+              daily_status = "pending";
+            }
             display_rows[visible].name = name;
             display_rows[visible].daily = daily_change;
             display_rows[visible].profit = row_profit;
+            display_rows[visible].daily_status = daily_status;
             visible++;
             if (visible >= MAX_POSITION_ROWS) break;
           }
@@ -2466,7 +2475,10 @@ script:
           for (int i = 0; i < MAX_POSITION_ROWS; i++) {
             if (i < visible) {
               set_label(names[i], display_rows[i].name);
-              set_label(daily[i], percent(display_rows[i].daily));
+              const std::string status = display_rows[i].daily_status;
+              const bool market_waiting = status == "pending" || status == "closed" || status == "market_closed";
+              lv_obj_set_style_text_font(daily[i], market_waiting ? id(font_mdi_18) : id(font_body_bold), LV_PART_MAIN);
+              set_label(daily[i], market_waiting ? std::string("\xF3\xB0\x94\x9B") : percent(display_rows[i].daily));
               set_label(profits[i], money(display_rows[i].profit, currency));
               lv_obj_clear_flag(rows[i], LV_OBJ_FLAG_HIDDEN);
             } else {
